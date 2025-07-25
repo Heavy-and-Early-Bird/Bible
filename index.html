@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Bible Verse - Interactive (Scaled)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@300;400;600&family=Roboto+Slab:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="#" class="navbar-brand" id="dynamicBrandArea"></a>
+            <div class="nav-controls">
+                <div class="options-container">
+                    <button id="optionsBtn" title="Menu">⋮</button>
+                    <div id="optionsPanel" class="options-panel">
+                        <!-- Active Collection Display -->
+                        <div class="options-panel-item">
+                            <label class="options-panel-label">Active Collection:</label>
+                            <div class="options-panel-collection-control">
+                                <span id="activeCollectionDisplay" title="Current Collection Name">-- Full Bible --</span>
+                                <button id="openCollectionsModalBtn" class="options-panel-button-small">Change</button>
+                            </div>
+                        </div>
+                        <!-- Verse Count Display -->
+                        <p id="verseCountDisplay" class="options-panel-item" style="text-align: center; font-size: 0.9em; margin-top: -5px; margin-bottom: 15px; color: var(--reference-color); display: none;"></p>
+
+                        <!-- Active Translation Selector -->
+                        <div class="options-panel-item">
+                            <label class="options-panel-label" for="translationSelectorOptionsPanel">Active Translation:</label>
+                            <select id="translationSelectorOptionsPanel" class="options-panel-select" title="Select Active Bible">
+                                <option value="">-- No Translation Available --</option>
+                            </select>
+                        </div>
+
+                        <!-- VIEW MODE SELECTOR (Dropdown) -->
+                        <div class="options-panel-item" id="viewModeSelectorContainer">
+                            <label class="options-panel-label" for="viewModeSelector">View Mode:</label>
+                            <select id="viewModeSelector" class="options-panel-select">
+                                <option value="fullChapter">Chapter Context</option>
+                                <option value="entryOnly">Entry Only</option>
+                                <option value="multiTranslation">Multi-Translation</option>
+                                <option value="fullCollection">Full Collection (All Entries)</option>
+                            </select>
+                        </div>
+                        <hr class="settings-hr" style="margin: 10px 0;">
+                        <!-- Link to Audio Bible TTS Page -->
+
+
+                        <!-- Action Buttons -->
+                        <div class="options-panel-actions">
+                            <button id="openSettingsBtn">Settings</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Fullscreen Toggle Button -->
+    <button id="fullscreenToggleBtn" title="Toggle Fullscreen">
+        <!-- Icon set by JS -->
+    </button>
+
+    <!-- Main Content Area (ID is important for audiovisual_integrations.js) -->
+    <main id="mainContentArea" class="content-area">
+        <div id="verse-text" class="verse-text-display" data-no-verses-message="Please import a Bible and/or select a translation in Settings.">
+            <!-- Content injected by JS -->
+        </div>
+        <p id="statusMessage"></p>
+    </main>
+
+    <!-- Application Status Bar -->
+    <div id="appStatusBar" class="app-status-bar">
+        <div class="status-bar-segment status-bar-left" id="goodmanLogoInStatus">Goodman</div>
+
+        <!-- Spacer to push right content -->
+        <div class="status-bar-segment status-bar-main-spacer"></div>
+
+        <!-- Right-aligned content -->
+        <div class="status-bar-segment status-bar-right-content">
+            <!-- Timer Text -->
+            <div class="status-bar-timer-info">
+                <span id="statusBarTimeLabel" class="status-bar-time-label">Next:</span>
+                <span id="statusBarTimeLeft" class="status-bar-time-left">00:00</span>
+            </div>
+            <!-- Quick Seek Panel Toggle Button -->
+            <div id="quickSeekPanelToggleContainerInStatusBar">
+                <button id="toggleQuickSeekPanelBtnInStatusBar" title="Quick Seek Controls" class="icon-button">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm4.95-4.95l-1.41 1.41L16.17 8H14v2h2.17l1.62-1.62 1.41-1.41zM4.83 9.59L3.21 7.97l1.41-1.41L6.25 8.17V6h2v2.17L6.62 9.81l-1.41 1.41L4.83 9.59zm11.58 5.82l1.62 1.62 1.41 1.41-1.41 1.41-1.62-1.62V18h-2v-2.17l-1.62 1.62-1.41 1.41-1.41-1.41 1.62-1.62H14v-2h2.17l.24.23z"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- New Full-Width Background Progress Bar -->
+        <div id="statusBarFullWidthProgressBg" class="status-bar-fullwidth-progress-bg">
+            <div id="statusBarFullWidthProgressFill" class="status-bar-fullwidth-progress-fill"></div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="settingsModalTitle" class="modal-title">Settings</h3>
+                <button id="modalCloseBtnSettings" class="modal-close-btn" title="Close Settings">×</button>
+            </div>
+            <div class="modal-body">
+                <!-- Personalization Section -->
+                <div class="settings-section">
+                    <h4>Personalize</h4>
+                    <div class="settings-modal-item theme-switcher-item">
+                        <label for="themeSelector">Theme:</label>
+                        <select id="themeSelector">
+                            <option value="dark">Dark (Original)</option>
+                            <option value="light">Light (Original)</option>
+                            <option value="dark_sepia">Dark Sepia (Original)</option>
+                            <option value="ocean_blue">Ocean Blue (Original)</option>
+                            <option value="deep_forest">Deep Forest (Original)</option>
+                            <option value="sunset_orange">Sunset Orange (Original)</option>
+                            <option value="midnight_bloom">Midnight Bloom</option>
+                            <option value="charcoal_amber">Charcoal Amber</option>
+                            <option value="obsidian_emerald">Obsidian Emerald</option>
+                            <option value="daybreak_haze">Daybreak Haze</option>
+                            <option value="vanilla_cream">Vanilla Cream</option>
+                            <option value="minty_dew">Minty Dew</option>
+                        </select>
+                    </div>
+                    <div class="settings-modal-item verse-font-selector-item">
+                        <label for="verseFontSelector">Verse Font:</label>
+                        <select id="verseFontSelector">
+                            <option value="'Roboto Slab', serif">Roboto Slab (Default)</option>
+                            <option value="'Merriweather', serif">Merriweather</option>
+                            <option value="'Times New Roman', Times, serif">Times New Roman</option>
+                            <option value="'Georgia', serif">Georgia</option>
+                            <option value="Arial, Helvetica, sans-serif">Arial</option>
+                            <option value="'Verdana', Geneva, sans-serif">Verdana</option>
+                        </select>
+                    </div>
+                    <div class="settings-modal-item font-size-item">
+                        <label for="fontSizeSlider" id="fontSizeValueLabel">Font Size: 100%</label>
+                        <input type="range" id="fontSizeSlider" min="50" max="400" value="100" step="10" title="Adjust Font Size">
+                    </div>
+                </div>
+                <hr class="settings-hr">
+
+                <!-- Audiovisual Settings Section -->
+                <div class="settings-section">
+                    <h4>Audiovisual</h4>
+                    <div class="settings-modal-item">
+                        <label for="bgImageSelector">Verse Background Image:</label>
+                        <select id="bgImageSelector">
+                            <option value="none">None</option>
+                            <!-- Populated by JS -->
+                        </select>
+                    </div>
+                    <div class="settings-modal-item checkbox-item">
+                        <input type="checkbox" id="bgImageOverlayToggle">
+                        <label for="bgImageOverlayToggle">Enable Dark Overlay on Image</label>
+                    </div>
+                    <div class="settings-modal-item">
+                        <label for="bgImageOverlayOpacitySlider" id="bgImageOverlayOpacityLabel">Overlay Opacity: 50%</label>
+                        <input type="range" id="bgImageOverlayOpacitySlider" min="0.1" max="0.9" value="0.5" step="0.05" title="Adjust Overlay Opacity">
+                    </div>
+                     <div class="settings-modal-item">
+                        <label for="bgImageBlurSlider" id="bgImageBlurLabel">Image Blur: 0px</label>
+                        <input type="range" id="bgImageBlurSlider" min="0" max="20" value="0" step="1" title="Adjust Background Image Blur">
+                    </div>
+
+                    <div class="settings-modal-item">
+                        <label for="verseSoundSelector">Verse Change Sound:</label>
+                        <select id="verseSoundSelector">
+                            <option value="none">None</option>
+                            <!-- Populated by JS -->
+                        </select>
+                    </div>
+                    <div class="settings-modal-item">
+                        <label for="bgMusicSelector">Background Music:</label>
+                        <select id="bgMusicSelector">
+                            <option value="none">None</option>
+                            <!-- Populated by JS -->
+                        </select>
+                    </div>
+                    <div class="settings-modal-item">
+                        <label for="bgMusicVolumeSlider" id="bgMusicVolumeLabel">Music Volume: 50%</label>
+                        <input type="range" id="bgMusicVolumeSlider" min="0" max="1" value="0.5" step="0.01" title="Adjust Background Music Volume">
+                    </div>
+                </div>
+                <hr class="settings-hr">
+
+                <div class="settings-section"> 
+                    <h4>Timer & Progress</h4>
+                    <div class="settings-modal-item interval-slider-container">
+                        <label for="intervalSlider" id="intervalValueLabel">Interval: 4 min</label>
+                        <input type="range" id="intervalSlider" min="1" max="15" value="4" step="1" disabled title="Adjust Timer Interval">
+                    </div>
+                    <div class="settings-modal-item checkbox-item">
+                        <input type="checkbox" id="showProgressBarToggle" checked>
+                        <label for="showProgressBarToggle">Show Timer & Progress</label>
+                    </div>
+                </div>
+                <hr class="settings-hr">
+
+                <!-- Data Management Section -->
+                <div class="settings-section">
+                    <h4>Manage Data & Tools</h4>
+                    <div class="settings-subsection">
+                        <h5>Full Data Manager</h5>
+                        <p style="font-size:0.9rem; margin-bottom:15px;">Import Bibles, create/edit collections, use export tools, or the OpenBible Topic Importer.</p>
+                        <div class="settings-modal-item">
+                             <a href="datamanager.html" id="openDataManagerBtn" class="data-manager-link-button">Open Full Data Manager</a>
+                        </div>
+                         <div id="activeCollectionActionsForSettings" class="settings-modal-item" style="display: none; margin-top: 15px;">
+                            <div class="settings-item-inline">
+                                 <label style="margin-bottom: 0; font-weight:normal;">Current Collection: <strong id="activeCollectionForSettingsDisplay"></strong></label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Collections Selection Modal -->
+    <div id="collectionsModal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3 id="collectionsModalTitle" class="modal-title">Select Collection</h3>
+                <button id="modalCloseBtnCollections" class="modal-close-btn" title="Close Collection Selection">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-modal-item" style="margin-bottom: 15px;">
+                    <input type="search" id="collectionSearchInput" placeholder="Search collections..." title="Filter Collections">
+                </div>
+                <div id="collectionsListContainer">
+                    <!-- Collection buttons populated by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Collection Note Modal -->
+    <div id="collectionNoteModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 id="collectionNoteModalTitle" class="modal-title">Collection Note</h3>
+                <button id="modalCloseBtnCollectionNote" class="modal-close-btn" title="Close Note Editor">×</button>
+            </div>
+            <div class="modal-body">
+                <textarea id="modalNoteTextarea" placeholder="Enter notes for this collection..." title="Collection Note"></textarea>
+            </div>
+            <div class="modal-footer" style="justify-content: space-between;">
+                <button id="modalDeleteNoteBtn" class="dm-button" style="background-color: var(--brand-color);">Delete Note</button>
+                <div>
+                    <button id="modalCancelNoteBtn" class="dm-button" style="background-color: grey; margin-right: 10px;">Cancel</button>
+                    <button id="modalSaveNoteBtn" class="dm-button">Save Note</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Seek Panel -->
+    <div id="quickSeekPanel" class="quick-seek-panel">
+        <div id="quickSeekControlsContainer" class="quick-seek-controls-container">
+            <div class="options-timer-controls">
+                <button id="timerPrevVerseBtn" title="Previous Verse" class="icon-button qsTimerPrevVerseBtn" disabled>
+                    <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"></path></svg>
+                </button>
+                <button id="pausePlayBtn" title="Pause/Play Timer" class="icon-button qsPausePlayBtn" disabled>
+                    <!-- Icon set by JS -->
+                </button>
+                <button id="timerNextVerseBtn" title="Next Verse" class="icon-button qsTimerNextVerseBtn" disabled>
+                    <svg viewBox="0 0 24 24"><path d="M16 6h2v12h-2zm-3.5 6l-8.5 6V6z"></path></svg>
+                </button>
+                <button id="randomVerseBtn" title="Random Verse" class="icon-button qsRandomVerseBtn" disabled>
+                    <svg viewBox="0 0 24 24"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41L19 19.59 17.59 21l-5.17-5.17-1.42 1.41z"></path></svg>
+                </button>
+                <button id="quickSeekNoteBtn" title="View/Edit Collection Note" class="icon-button qsNoteBtn" disabled>
+                    <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"></path></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- JavaScript Files -->
+    <script src="scripts/script.js"></script>
+    <script src="scripts/audiovisual_integrations.js"></script> <!-- Already present -->
+    <!-- audiobible_tts_script.js is for audiobible_tts.html, not directly linked here -->
+    <script src="scripts/main_app_script.js"></script>
+</body>
+</html>
