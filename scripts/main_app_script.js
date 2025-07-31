@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // --- DOM Element References ---
     const bodyElement = document.body;
-    const mainContentArea = document.getElementById('mainContentArea'); // Passed to AV script
+    const mainContentArea = document.getElementById('mainContentArea'); 
     const verseTextElement = document.getElementById('verse-text');
     const statusMessageElement = document.getElementById('statusMessage');
     const optionsContainer = document.querySelector('.options-container');
@@ -58,31 +58,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const statusBarTimeLeft = document.getElementById('statusBarTimeLeft');
     const statusBarFullWidthProgressFill = document.getElementById('statusBarFullWidthProgressFill');
 
-    // Collection Note Modal Elements
-    const collectionNoteModal = document.getElementById('collectionNoteModal');
-    const modalCloseBtnCollectionNote = document.getElementById('modalCloseBtnCollectionNote');
-    const modalNoteTextarea = document.getElementById('modalNoteTextarea');
-    const modalSaveNoteBtn = document.getElementById('modalSaveNoteBtn');
-    const modalCancelNoteBtn = document.getElementById('modalCancelNoteBtn');
-    const modalDeleteNoteBtn = document.getElementById('modalDeleteNoteBtn');
+    // NEW Notes Modal Reference
+    const notesModal = document.getElementById('notesModal');
 
     // Quick Seek Panel elements
     const quickSeekPanel = document.getElementById('quickSeekPanel');
     const toggleQuickSeekPanelBtnInStatusBar = document.getElementById('toggleQuickSeekPanelBtnInStatusBar');
     const quickSeekControlsContainer = document.getElementById('quickSeekControlsContainer');
     const quickSeekNoteBtn = document.getElementById('quickSeekNoteBtn'); 
+    const quickSeekGoToContainer = document.getElementById('quickSeekGoToContainer');
+    const quickSeekReferenceInput = document.getElementById('quickSeekReferenceInput');
+    const quickSeekGoBtn = document.getElementById('quickSeekGoBtn');
+    const openReferencePickerBtn = document.getElementById('openReferencePickerBtn');
 
-    // AV Settings DOM Elements (to be passed to AV script)
-    const bgImageSelector = document.getElementById('bgImageSelector');
-    const verseSoundSelector = document.getElementById('verseSoundSelector');
-    const bgMusicSelector = document.getElementById('bgMusicSelector');
-    const bgMusicVolumeSlider = document.getElementById('bgMusicVolumeSlider');
-    const bgMusicVolumeLabel = document.getElementById('bgMusicVolumeLabel');
-    const bgImageOverlayToggle = document.getElementById('bgImageOverlayToggle');
-    const bgImageOverlayOpacitySlider = document.getElementById('bgImageOverlayOpacitySlider');
-    const bgImageOverlayOpacityLabel = document.getElementById('bgImageOverlayOpacityLabel');
-    const bgImageBlurSlider = document.getElementById('bgImageBlurSlider');
-    const bgImageBlurLabel = document.getElementById('bgImageBlurLabel');
+    // Reference Picker Modal elements
+    const referencePickerModal = document.getElementById('referencePickerModal');
+    const modalCloseBtnRefPicker = document.getElementById('modalCloseBtnRefPicker');
+    const refPickerBook = document.getElementById('refPickerBook');
+    const refPickerChapter = document.getElementById('refPickerChapter');
+    const refPickerVerse = document.getElementById('refPickerVerse');
+    const refPickerGoBtn = document.getElementById('refPickerGoBtn');
+
+    // AV Settings Master Toggle
+    const toggleAVSystemBtn = document.getElementById('toggleAVSystemBtn');
 
 
     // --- SVG Icons ---
@@ -106,6 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const COLLECTION_INDICES_LS_KEY = 'bibleAppCollectionIndices';
     const VIEW_MODE_LS_KEY = 'bibleAppViewMode';
+    const AV_SYSTEM_ENABLED_LS_KEY = 'av_systemEnabled';
 
 
     // --- Timer & Control Flags ---
@@ -119,6 +118,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let isProgressHiddenByUser = false;
     const PULSE_THRESHOLD_SECONDS = 5;
     let verseChangeFlashTimeoutId;
+    // NEW: State to track the reason for pausing
+    let pauseSource = null; // Can be 'user', 'modal', 'visibility'
 
     let allTimerButtonsInOptions = []; 
 
@@ -180,6 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateProgressBar();
     }
 
+    // ... (getStoredCollectionIndices, saveCollectionIndex functions remain the same) ...
     function getStoredCollectionIndices() {
         try {
             const stored = localStorage.getItem(COLLECTION_INDICES_LS_KEY);
@@ -201,6 +203,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // ... (updateVerseCountDisplay, loadCollectionsAndSetActive, updateActiveCollectionUIDisplay functions remain the same) ...
     function updateVerseCountDisplay() {
         if (!verseCountDisplay) return;
 
@@ -265,15 +268,19 @@ document.addEventListener('DOMContentLoaded', () => {
                  settingsItem.style.display = activeCollectionName ? 'block' : 'none';
             }
         }
+        if (quickSeekGoToContainer) {
+            quickSeekGoToContainer.classList.toggle('visible', !activeCollectionName);
+        }
         updateCollectionRelatedButtonStates();
         updateVerseCountDisplay();
     }
 
     function updateCollectionRelatedButtonStates() {
-        const isRealCollectionActive = activeCollectionName && allStoredCollections[activeCollectionName];
-        if (quickSeekNoteBtn) quickSeekNoteBtn.disabled = !isRealCollectionActive;
+        if (quickSeekNoteBtn) quickSeekNoteBtn.disabled = false; // Note button is now ALWAYS enabled
+        if (openReferencePickerBtn) openReferencePickerBtn.disabled = fullBibleVerses.length === 0;
     }
 
+    // ... (loadAndPopulateTranslationsDropdown, activateTranslation, handleViewModeChange, setActiveVerseList, formatEntryVersesFromList, displayVerse functions remain the same) ...
     async function loadAndPopulateTranslationsDropdown() {
         const targetSelector = translationSelectorOptionsPanel;
         try {
@@ -353,6 +360,8 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.removeItem(LAST_ACTIVE_TRANSLATION_LS_KEY);
         } finally {
              await setActiveVerseList();
+             populateBookPicker();
+             updateCollectionRelatedButtonStates();
         }
     }
 
@@ -422,16 +431,14 @@ document.addEventListener('DOMContentLoaded', () => {
                  appShowStatus(noVersesMessage, true, 5000);
             }
 
-        } else if (currentTranslationId && fullBibleVerses && fullBibleVerses.length > 0 && currentViewMode !== VIEW_MODE_FULL_COLLECTION) { 
-            activeVerseList = fullBibleVerses.map(v => ({
+        } else { // THIS IS THE FIX: When in Full Bible mode, populate from fullBibleVerses
+            activeVerseList = (fullBibleVerses || []).map(v => ({
                 _book: v._book,
                 _chapter: v._chapter,
                 _startVerse: v._verse,
                 _endVerse: v._verse,
                 reference: v.reference
             }));
-        } else {
-             activeVerseList = [];
         }
 
         if (currentViewMode !== VIEW_MODE_FULL_COLLECTION) {
@@ -492,11 +499,10 @@ document.addEventListener('DOMContentLoaded', () => {
     async function displayVerse(idx = currentVerseIndex) {
         updateAllTimerButtonsArray(); 
 
-        // Play sound BEFORE content update if changing verse in timed modes
         if (currentViewMode !== VIEW_MODE_FULL_COLLECTION && 
             activeVerseList.length > 0 && 
-            ( (currentVerseIndex !== idx && idx >=0) || // if index changes meaningfully
-              (currentVerseIndex >=0 && idx === currentVerseIndex && !isPaused) ) // or if it's a timed auto-advance to same index (e.g. single verse collection)
+            ( (currentVerseIndex !== idx && idx >=0) || 
+              (currentVerseIndex >=0 && idx === currentVerseIndex && !isPaused) ) 
             ) {
             if (typeof window.playVerseChangeSound === 'function') {
                 window.playVerseChangeSound(); 
@@ -560,11 +566,8 @@ document.addEventListener('DOMContentLoaded', () => {
              const currentActiveEntryForLogic = (currentVerseIndex >=0 && activeVerseList.length > 0) ? activeVerseList[currentVerseIndex] : null;
              entryToDisplay = currentActiveEntryForLogic || (activeVerseList.length > 0 && currentViewMode === VIEW_MODE_MULTI_TRANSLATION ? activeVerseList[0] : null);
 
-            if (currentViewMode === VIEW_MODE_MULTI_TRANSLATION && !entryToDisplay && activeVerseList.length > 0) {
-                 // This scenario means multi-translation is on, a collection IS active and has entries, but currentVerseIndex somehow became invalid (-1).
-                 // So we use the first entry of the active list. This logic is covered by the || in entryToDisplay assignment.
-            } else if (currentViewMode === VIEW_MODE_MULTI_TRANSLATION && !entryToDisplay) { // Multi-trans selected, but no collection or empty collection
-                 if (verseTextElement) verseTextElement.innerHTML = `<p>No reference to display for Multi-Translation. Select a collection with entries or choose a non-"Full Bible" active collection.</p>`;
+            if (currentViewMode === VIEW_MODE_MULTI_TRANSLATION && !entryToDisplay) { 
+                 if (verseTextElement) verseTextElement.innerHTML = `<p>No reference to display for Multi-Translation. Select a collection with entries.</p>`;
                  if (dynamicBrandArea) dynamicBrandArea.textContent = "No Ref (Multi)";
                  setControlsState(false); updateCollectionRelatedButtonStates(); return;
             } else if (!entryToDisplay && currentViewMode !== VIEW_MODE_FULL_COLLECTION) { 
@@ -769,69 +772,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (quickSeekNoteBtn) { 
         quickSeekNoteBtn.addEventListener('click', () => { 
-            if (!activeCollectionName || !allStoredCollections[activeCollectionName]) {
-                appShowStatus("No active collection to show/edit note for.", true);
-                return;
-            }
-            const collection = allStoredCollections[activeCollectionName];
-            if (modalNoteTextarea) modalNoteTextarea.value = collection.collectionNote || '';
-            if (collectionNoteModal) collectionNoteModal.style.display = 'block';
-            if (modalNoteTextarea) modalNoteTextarea.focus();
-            if(modalDeleteNoteBtn) modalDeleteNoteBtn.style.display = (collection.collectionNote && collection.collectionNote.trim() !== '') ? 'inline-block' : 'none';
-        });
-    }
-
-    async function saveOrDeleteActiveCollectionNote(newNoteContent, isDelete = false) {
-        if (!activeCollectionName || !allStoredCollections[activeCollectionName]) {
-            appShowStatus("Error: No active collection selected.", true);
-            return false;
-        }
-        const collection = allStoredCollections[activeCollectionName];
-        collection.collectionNote = isDelete ? null : (newNoteContent.trim() || null);
-        collection.lastModified = new Date();
-
-        try {
-            await saveCollectionToDB(collection);
-            allStoredCollections[activeCollectionName] = collection;
-            appShowStatus(isDelete ? "Collection note deleted." : "Collection note saved.", false);
-            return true;
-        } catch (e) {
-            console.error("Error saving/deleting collection note:", e);
-            appShowStatus(`Error saving note: ${e.message || 'Unknown error'}`, true);
-            return false;
-        }
-    }
-
-    if (modalSaveNoteBtn) {
-        modalSaveNoteBtn.addEventListener('click', async () => {
-            const noteText = modalNoteTextarea?.value || '';
-            if (await saveOrDeleteActiveCollectionNote(noteText, false)) {
-                if (collectionNoteModal) collectionNoteModal.style.display = 'none';
+            if (typeof window.openNotesModal === 'function') {
+                window.openNotesModal();
+            } else {
+                console.error("Notes Manager is not available.");
+                appShowStatus("Error: Notes feature could not be loaded.", true);
             }
         });
     }
 
-    if (modalDeleteNoteBtn) {
-        modalDeleteNoteBtn.addEventListener('click', async () => {
-            if (confirm("Are you sure you want to delete this collection note?")) {
-                if (await saveOrDeleteActiveCollectionNote("", true)) {
-                    if (collectionNoteModal) collectionNoteModal.style.display = 'none';
-                }
-            }
-        });
-    }
-
-    if (modalCancelNoteBtn) {
-        modalCancelNoteBtn.addEventListener('click', () => {
-            if (collectionNoteModal) collectionNoteModal.style.display = 'none';
-        });
-    }
-    if (modalCloseBtnCollectionNote) {
-        modalCloseBtnCollectionNote.addEventListener('click', () => {
-            if (collectionNoteModal) collectionNoteModal.style.display = 'none';
-        });
-    }
-
+    // ... (populateCollectionsModal and its listeners remain the same) ...
      function populateCollectionsModal() {
          if (!collectionsListContainer) return;
          collectionsListContainer.innerHTML = '';
@@ -885,10 +835,17 @@ document.addEventListener('DOMContentLoaded', () => {
      if(modalCloseBtnCollections) modalCloseBtnCollections.addEventListener('click', () => { if(collectionsModal) collectionsModal.style.display = 'none'; });
      if(collectionSearchInput) collectionSearchInput.addEventListener('input', populateCollectionsModal);
 
-     if(optionsBtn) optionsBtn.addEventListener('click', (e) => { e.stopPropagation(); optionsPanel?.classList.toggle('visible'); });
-
-     if(openSettingsBtn) openSettingsBtn.addEventListener('click', () => { if(settingsModal) settingsModal.style.display = "block"; if(optionsPanel) optionsPanel.classList.remove('visible'); updateCollectionRelatedButtonStates(); });
-     if(modalCloseBtnSettings) modalCloseBtnSettings.addEventListener('click', () => { if(settingsModal) settingsModal.style.display = "none"; });
+    // MODIFIED: Added pauseTimer call
+     if(openSettingsBtn) openSettingsBtn.addEventListener('click', () => { 
+        if (!isPaused) { pauseTimer('modal'); }
+        if(settingsModal) settingsModal.style.display = "block"; 
+        if(optionsPanel) optionsPanel.classList.remove('visible'); 
+        updateCollectionRelatedButtonStates(); 
+    });
+     if(modalCloseBtnSettings) modalCloseBtnSettings.addEventListener('click', () => { 
+        if(settingsModal) settingsModal.style.display = "none"; 
+        if (isPaused && pauseSource === 'modal') { playTimer(); }
+    });
 
 
       document.addEventListener('click', (e) => {
@@ -897,14 +854,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (settingsModal?.style.display === "block" && !settingsModal.querySelector('.modal-content')?.contains(e.target) && e.target !== openSettingsBtn && !openSettingsBtn?.contains(e.target)) {
              settingsModal.style.display = "none";
+             if (isPaused && pauseSource === 'modal') { playTimer(); } // MODIFIED: Resume on outside click
          }
         if (collectionsModal?.style.display === "block" && !collectionsModal.querySelector('.modal-content')?.contains(e.target) && e.target !== openCollectionsModalBtn && !openCollectionsModalBtn?.contains(e.target)) {
              collectionsModal.style.display = "none";
+             if (isPaused && pauseSource === 'modal') { playTimer(); } // MODIFIED: Resume on outside click
          }
-        if (collectionNoteModal?.style.display === "block" && 
-            !collectionNoteModal.querySelector('.modal-content')?.contains(e.target) && 
+        if (notesModal?.style.display === "block" && 
+            !notesModal.querySelector('.modal-content')?.contains(e.target) && 
             e.target !== quickSeekNoteBtn && !quickSeekNoteBtn?.contains(e.target) ) { 
-            collectionNoteModal.style.display = "none";
+            notesModal.style.display = "none";
+            if (isPaused && pauseSource === 'modal') { playTimer(); } // MODIFIED: Resume on outside click
+        }
+        if (referencePickerModal?.style.display === "block" && !referencePickerModal.querySelector('.modal-content')?.contains(e.target) && e.target !== openReferencePickerBtn && !openReferencePickerBtn?.contains(e.target) ) { 
+            referencePickerModal.style.display = "none";
+            if (isPaused && pauseSource === 'modal') { playTimer(); } // MODIFIED: Resume on outside click
         }
         
         if (quickSeekPanel?.classList.contains("visible") && 
@@ -916,6 +880,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // ... (updateInterval, updateFontSize, applyVerseFont, themeSelector, showProgressBarToggle, toggleAVSystemBtn functions remain the same) ...
     function updateInterval(mins) { VERSE_CHANGE_INTERVAL_MS = parseInt(mins) * 60 * 1000; TOTAL_DURATION_SECONDS = VERSE_CHANGE_INTERVAL_MS / 1000; if(intervalValueLabel) intervalValueLabel.textContent = `Interval: ${mins} min`; }
     if(intervalSlider) intervalSlider.addEventListener('input', (e) => { const m = e.target.value; updateInterval(m); localStorage.setItem(VERSE_INTERVAL_MINUTES_LS_KEY, m); if (currentViewMode !== VIEW_MODE_FULL_COLLECTION && activeVerseList.length > 0 && currentVerseIndex >= 0 && !(allTimerButtonsInOptions[0] && allTimerButtonsInOptions[0].disabled) ) resetAndStartTimers(); });
 
@@ -958,6 +923,21 @@ document.addEventListener('DOMContentLoaded', () => {
         updateProgressBar();
     });
 
+    if (toggleAVSystemBtn) {
+        toggleAVSystemBtn.addEventListener('click', async () => {
+            const isCurrentlyEnabled = localStorage.getItem(AV_SYSTEM_ENABLED_LS_KEY) === 'true';
+            const newIsEnabled = !isCurrentlyEnabled;
+            localStorage.setItem(AV_SYSTEM_ENABLED_LS_KEY, newIsEnabled);
+            toggleAVSystemBtn.textContent = newIsEnabled ? 'Disable' : 'Enable';
+            appShowStatus(`Audiovisual system ${newIsEnabled ? 'enabled' : 'disabled'}.`, false);
+
+            if (typeof window.loadAndApplyAVSettings === 'function') {
+                await window.loadAndApplyAVSettings();
+            } else {
+                console.error("AV integration function 'loadAndApplyAVSettings' not found.");
+            }
+        });
+    }
 
     function navigateVerse(dir) {
         if (currentViewMode === VIEW_MODE_FULL_COLLECTION) return; 
@@ -968,7 +948,7 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (typeof dir === 'number' && dir >= 0 && dir < activeVerseList.length) newIdx = dir; 
         else if (dir !== 'prev' && dir !== 'next') { console.warn("Invalid navigation direction:", dir); return;}
 
-        displayVerse(newIdx); // Sound will be played within displayVerse if applicable
+        displayVerse(newIdx); 
         resetAndStartTimers();
     }
     function showRandomVerse() {
@@ -977,23 +957,29 @@ document.addEventListener('DOMContentLoaded', () => {
         let randIdx;
         do { randIdx = Math.floor(Math.random() * activeVerseList.length); }
         while (randIdx === currentVerseIndex && activeVerseList.length > 1);
-        displayVerse(randIdx); // Sound will be played within displayVerse
+        displayVerse(randIdx); 
         resetAndStartTimers();
     }
     
+    // MODIFIED: Added hotkeys and modal close resume logic
      document.addEventListener('keydown', (e) => {
         const activeElement = document.activeElement;
         const isInputActive = activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'SELECT' || activeElement.tagName === 'TEXTAREA' || activeElement.isContentEditable);
         
          if (e.key === 'Escape') {
-            let modalClosed = false;
-             if (settingsModal?.style.display === "block") { settingsModal.style.display = "none"; modalClosed = true; }
-             if (collectionsModal?.style.display === "block") { collectionsModal.style.display = "none"; modalClosed = true; }
-             if (collectionNoteModal?.style.display === "block") { collectionNoteModal.style.display = "none"; modalClosed = true; }
-             if (optionsPanel?.classList.contains("visible")) { optionsPanel.classList.remove("visible"); modalClosed = true; }
-             if (quickSeekPanel?.classList.contains("visible")) { quickSeekPanel.classList.remove("visible"); modalClosed = true;}
+            let modalWasOpen = false;
+             if (settingsModal?.style.display === "block") { settingsModal.style.display = "none"; modalWasOpen = true; }
+             if (collectionsModal?.style.display === "block") { collectionsModal.style.display = "none"; modalWasOpen = true; }
+             if (notesModal?.style.display === "block") { notesModal.style.display = "none"; modalWasOpen = true; }
+             if (referencePickerModal?.style.display === "block") { referencePickerModal.style.display = "none"; modalWasOpen = true; }
+             
+             if (modalWasOpen) {
+                if (isPaused && pauseSource === 'modal') { playTimer(); }
+                return; // Prevent further processing if a modal was closed
+             }
 
-            if(modalClosed) return;
+             if (optionsPanel?.classList.contains("visible")) { optionsPanel.classList.remove("visible"); return; }
+             if (quickSeekPanel?.classList.contains("visible")) { quickSeekPanel.classList.remove("visible"); return; }
         }
 
          if (isInputActive && e.key !== 'Escape') return;
@@ -1009,7 +995,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
          if (e.key === 'ArrowLeft') navigateVerse('prev');
          else if (e.key === 'ArrowRight') navigateVerse('next');
-         else if (e.key === ' ' && pausePlayBtn && !pausePlayBtn.disabled) {
+         else if ((e.key.toLowerCase() === 'k' || e.key === ' ') && pausePlayBtn && !pausePlayBtn.disabled) {
             e.preventDefault();
              pausePlayBtn.click();
          }
@@ -1017,6 +1003,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function formatTime(secs) { const mins = Math.floor(secs / 60); const s = Math.round(secs % 60); return `${String(mins).padStart(2, '0')}:${String(s).padStart(2, '0')}`; }
 
+    // ... (updateProgressBar function remains the same) ...
     function updateProgressBar() {
         if (!statusBarFullWidthProgressFill || !statusBarTimeLeft || !appStatusBar) return;
         const timerControlsCurrentlyDisabled = allTimerButtonsInOptions.length > 0 && allTimerButtonsInOptions[0] && allTimerButtonsInOptions[0].disabled;
@@ -1048,6 +1035,26 @@ document.addEventListener('DOMContentLoaded', () => {
         statusBarFullWidthProgressFill.classList.toggle('pulsing', !isPaused && timeLeftInSeconds > 0 && timeLeftInSeconds <= PULSE_THRESHOLD_SECONDS);
     }
 
+    // NEW: Centralized play/pause functions
+    function pauseTimer(source) {
+        if (isPaused) return; // Already paused, do nothing.
+        isPaused = true;
+        pauseSource = source;
+        stopTimers();
+        updatePausePlayButtonIcon();
+        updateProgressBar();
+    }
+
+    function playTimer() {
+        if (!isPaused) return; // Already playing, do nothing.
+        isPaused = false;
+        pauseSource = null;
+        updatePausePlayButtonIcon();
+        if (timeLeftInSeconds <= 0) { timeLeftInSeconds = TOTAL_DURATION_SECONDS; }
+        countdownIntervalId = setInterval(countdown, 1000);
+        autoAdvanceTimeoutId = setTimeout(autoAdvanceVerse, timeLeftInSeconds * 1000);
+        updateProgressBar();
+    }
 
     function countdown() {
         if (isPaused || timeLeftInSeconds <= 0 || activeVerseList.length === 0 || currentVerseIndex < 0 || currentViewMode === VIEW_MODE_FULL_COLLECTION) {
@@ -1098,6 +1105,7 @@ document.addEventListener('DOMContentLoaded', () => {
          stopTimers();
          timeLeftInSeconds = TOTAL_DURATION_SECONDS;
          isPaused = false;
+         pauseSource = null; // NEW: Reset pause source
          updatePausePlayButtonIcon();
          if (statusBarFullWidthProgressFill) {
             statusBarFullWidthProgressFill.classList.remove('paused');
@@ -1119,7 +1127,8 @@ document.addEventListener('DOMContentLoaded', () => {
         updateAllTimerButtonsArray();
         if(pausePlayBtn) { pausePlayBtn.innerHTML = isPaused ? playIconSVG : pauseIconSVG; pausePlayBtn.setAttribute('title', isPaused ? 'Play Timer' : 'Pause Timer'); }
     }
-
+    
+    // ... (setFullscreen and pinch-zoom functions remain the same) ...
     function setFullscreen(isFullscreen) { if(bodyElement) bodyElement.classList.toggle('fullscreen-active', isFullscreen); if(fullscreenToggleBtn) { fullscreenToggleBtn.innerHTML = isFullscreen ? exitFullscreenIconSVG : enterFullscreenIconSVG; fullscreenToggleBtn.title = isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'; } localStorage.setItem(FULLSCREEN_LS_KEY, isFullscreen.toString()); }
     if(fullscreenToggleBtn) fullscreenToggleBtn.addEventListener('click', () => { setFullscreen(!bodyElement?.classList.contains('fullscreen-active')); });
 
@@ -1162,6 +1171,85 @@ document.addEventListener('DOMContentLoaded', () => {
         mainContentArea.addEventListener('touchend', handlePinchEnd);
         mainContentArea.addEventListener('touchcancel', handlePinchEnd);
     }
+    // ... (handleGoToReference and ref picker functions remain the same) ...
+    async function handleGoToReference() {
+        const refText = quickSeekReferenceInput.value.trim();
+        if (!refText) return;
+        if (activeCollectionName) {
+            appShowStatus("Go To is only for 'Full Bible' mode.", true);
+            return;
+        }
+        if (!currentTranslationId || !fullBibleVerses || fullBibleVerses.length === 0) {
+            appShowStatus("Please select a valid translation first.", true);
+            return;
+        }
+
+        const parsedRef = parseBibleReferenceWithNote(refText);
+        if (!parsedRef) {
+            appShowStatus(`Could not parse reference: "${refText}"`, true);
+            return;
+        }
+        
+        if (currentViewMode !== 'fullChapter') {
+            currentViewMode = 'fullChapter';
+            viewModeSelector.value = 'fullChapter';
+            localStorage.setItem(VIEW_MODE_LS_KEY, currentViewMode);
+            appShowStatus("Switched to Chapter Context view.", false, 2000);
+        }
+
+        const foundIndex = activeVerseList.findIndex(v =>
+            v._book.toLowerCase() === parsedRef.book.toLowerCase().replace(/\s+/g, ' ') &&
+            v._chapter === parsedRef.chapter &&
+            v._startVerse === parsedRef.startVerse
+        );
+
+        if (foundIndex !== -1) {
+            appShowStatus(`Jumping to ${parsedRef.book} ${parsedRef.chapter}:${parsedRef.startVerse}...`, false, 2000);
+            displayVerse(foundIndex);
+            quickSeekReferenceInput.value = ''; // Clear input on success
+            if(quickSeekPanel) quickSeekPanel.classList.remove('visible'); // Close panel
+        } else {
+            appShowStatus(`Reference "${refText}" not found in this translation.`, true);
+        }
+    }
+
+    function populateBookPicker() {
+        if (!refPickerBook || typeof BIBLE_BOOK_NAMES_BY_NUMBER === 'undefined') return;
+        refPickerBook.innerHTML = '<option value="">-- Select Book --</option>';
+        BIBLE_BOOK_NAMES_BY_NUMBER.slice(1).forEach(bookName => {
+            refPickerBook.add(new Option(bookName, bookName));
+        });
+        refPickerChapter.innerHTML = '<option value="">-- Chapter --</option>';
+        refPickerVerse.innerHTML = '<option value="">-- Verse --</option>';
+    }
+    
+    function updateChapterPicker() {
+        if (!refPickerBook.value || fullBibleVerses.length === 0) {
+            refPickerChapter.innerHTML = '<option value="">-- Chapter --</option>';
+            refPickerVerse.innerHTML = '<option value="">-- Verse --</option>';
+            return;
+        }
+        const selectedBook = refPickerBook.value.toLowerCase();
+        const chapters = [...new Set(fullBibleVerses.filter(v => v._book === selectedBook).map(v => v._chapter))];
+        chapters.sort((a,b) => a-b);
+        refPickerChapter.innerHTML = '<option value="">-- Chapter --</option>';
+        chapters.forEach(chapNum => refPickerChapter.add(new Option(chapNum, chapNum)));
+        refPickerVerse.innerHTML = '<option value="">-- Verse --</option>';
+    }
+    
+    function updateVersePicker() {
+        if (!refPickerBook.value || !refPickerChapter.value || fullBibleVerses.length === 0) {
+            refPickerVerse.innerHTML = '<option value="">-- Verse --</option>';
+            return;
+        }
+        const selectedBook = refPickerBook.value.toLowerCase();
+        const selectedChap = parseInt(refPickerChapter.value, 10);
+        const verses = fullBibleVerses.filter(v => v._book === selectedBook && v._chapter === selectedChap).map(v => v._verse);
+        verses.sort((a,b) => a-b);
+        refPickerVerse.innerHTML = '<option value="">-- Verse --</option>';
+        verses.forEach(vNum => refPickerVerse.add(new Option(vNum, vNum)));
+    }
+
 
     async function initializeApp() {
         appShowStatus("Initializing...", false, 0);
@@ -1208,26 +1296,17 @@ document.addEventListener('DOMContentLoaded', () => {
         isProgressHiddenByUser = storedShowProgress === 'false';
         if (showProgressBarToggle) showProgressBarToggle.checked = !isProgressHiddenByUser;
 
-        // Initializing Audiovisual settings module needs to happen early so UI is correct
-        if (typeof window.initAVSettings === 'function') {
-            window.initAVSettings({
-                mainContentArea: mainContentArea, 
-                bgImageSelector: bgImageSelector,
-                verseSoundSelector: verseSoundSelector,
-                bgMusicSelector: bgMusicSelector,
-                bgMusicVolumeSlider: bgMusicVolumeSlider,
-                bgMusicVolumeLabel: bgMusicVolumeLabel,
-                bgImageOverlayToggle: bgImageOverlayToggle,
-                bgImageOverlayOpacitySlider: bgImageOverlayOpacitySlider,
-                bgImageOverlayOpacityLabel: bgImageOverlayOpacityLabel,
-                bgImageBlurSlider: bgImageBlurSlider,
-                bgImageBlurLabel: bgImageBlurLabel
-            });
-        } else {
-            console.warn("Audiovisual settings module not initialized. `initAVSettings` not found.");
+        const isAVEnabled = localStorage.getItem(AV_SYSTEM_ENABLED_LS_KEY) === 'true';
+        if (toggleAVSystemBtn) {
+            toggleAVSystemBtn.textContent = isAVEnabled ? 'Disable' : 'Enable';
         }
 
-        // App Status Bar initial setup now respects view mode for progress activity
+        if (typeof window.initAV === 'function') {
+            await window.initAV();
+        } else {
+            console.warn("Audiovisual system 'initAV' not found.");
+        }
+        
         if (appStatusBar) {
             const isProgressInitiallyActive = !isProgressHiddenByUser && 
                                            activeVerseList.length > 0 && 
@@ -1242,46 +1321,81 @@ document.addEventListener('DOMContentLoaded', () => {
         
         updateAllTimerButtonsArray(); 
 
-        if (currentViewMode === VIEW_MODE_FULL_COLLECTION) { 
-            setControlsState(false);
-        } else {
-            setControlsState(false); // Default to disabled, then activate if content allows
-        }
-        
+        setControlsState(false);
         updatePausePlayButtonIcon(); 
         if(statusBarFullWidthProgressFill) statusBarFullWidthProgressFill.style.width = '0%';
-        // updateProgressBar() will be called as part of setControlsState and later again.
-
 
         if (toggleQuickSeekPanelBtnInStatusBar && quickSeekPanel) {
             toggleQuickSeekPanelBtnInStatusBar.addEventListener('click', (e) => {
                 e.stopPropagation(); 
+                if (quickSeekGoToContainer) {
+                    quickSeekGoToContainer.classList.toggle('visible', !activeCollectionName);
+                }
                 quickSeekPanel.classList.toggle('visible');
             });
         }
+        
+        if (quickSeekGoBtn) quickSeekGoBtn.addEventListener('click', handleGoToReference);
+        if (quickSeekReferenceInput) quickSeekReferenceInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleGoToReference();
+            }
+        });
+
+        // MODIFIED: Added pauseTimer call
+        if(openReferencePickerBtn) openReferencePickerBtn.addEventListener('click', () => {
+            if (!isPaused) { pauseTimer('modal'); }
+            if (referencePickerModal) referencePickerModal.style.display = 'block';
+        });
+        if(modalCloseBtnRefPicker) modalCloseBtnRefPicker.addEventListener('click', () => {
+            if (referencePickerModal) referencePickerModal.style.display = 'none';
+            if (isPaused && pauseSource === 'modal') { playTimer(); }
+        });
+
+        if(refPickerBook) refPickerBook.addEventListener('change', updateChapterPicker);
+        if(refPickerChapter) refPickerChapter.addEventListener('change', updateVersePicker);
+        if(refPickerGoBtn) refPickerGoBtn.addEventListener('click', () => {
+            if (refPickerBook.value && refPickerChapter.value && refPickerVerse.value) {
+                quickSeekReferenceInput.value = `${refPickerBook.value} ${refPickerChapter.value}:${refPickerVerse.value}`;
+                handleGoToReference();
+                if (referencePickerModal) referencePickerModal.style.display = 'none';
+                if (isPaused && pauseSource === 'modal') { playTimer(); }
+            } else {
+                appShowStatus("Please select a book, chapter, and verse.", true);
+            }
+        });
 
         if (timerPrevVerseBtn) timerPrevVerseBtn.addEventListener('click', () => navigateVerse('prev'));
         if (timerNextVerseBtn) timerNextVerseBtn.addEventListener('click', () => navigateVerse('next'));
         if (randomVerseBtn) randomVerseBtn.addEventListener('click', showRandomVerse);
+        
+        // MODIFIED: Refactored pause/play button logic
         if (pausePlayBtn) {
             pausePlayBtn.addEventListener('click', () => {
                 if (currentViewMode === VIEW_MODE_FULL_COLLECTION) return; 
                 if (activeVerseList.length === 0 || currentVerseIndex < 0) return;
-                isPaused = !isPaused;
-                updatePausePlayButtonIcon();
+                
                 if (isPaused) {
-                    stopTimers(); 
+                    playTimer();
                 } else {
-                    if (timeLeftInSeconds <= 0) { 
-                        timeLeftInSeconds = TOTAL_DURATION_SECONDS;
-                    }
-                    countdownIntervalId = setInterval(countdown, 1000);
-                    autoAdvanceTimeoutId = setTimeout(autoAdvanceVerse, timeLeftInSeconds * 1000); 
+                    pauseTimer('user');
                 }
-                updateProgressBar();
             });
         }
 
+        // NEW: Event listener for tab visibility
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') {
+                if (!isPaused) {
+                    pauseTimer('visibility');
+                }
+            } else if (document.visibilityState === 'visible') {
+                if (isPaused && pauseSource === 'visibility') {
+                    playTimer();
+                }
+            }
+        });
 
         if (verseTextElement && verseTextElement.dataset) {
             let initialMsg = "Please import a Bible via Data Manager (Settings).";
@@ -1291,8 +1405,6 @@ document.addEventListener('DOMContentLoaded', () => {
              verseTextElement.dataset.noVersesMessage = initialMsg;
              verseTextElement.innerHTML = `<p>${verseTextElement.dataset.noVersesMessage}</p>`;
         }
-
-        // Update brand area based on initial state
         if ((activeVerseList.length === 0 || currentVerseIndex < 0) && currentViewMode !== VIEW_MODE_FULL_COLLECTION) {
              if (translationsFromDB && translationsFromDB.length > 0) {
                  if (dynamicBrandArea) dynamicBrandArea.textContent = "Select Content";
@@ -1305,6 +1417,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (dynamicBrandArea) dynamicBrandArea.textContent = "Select Collection";
         }
 
+        populateBookPicker();
 
         const lastActiveTranslationId = localStorage.getItem(LAST_ACTIVE_TRANSLATION_LS_KEY);
         const targetSelectorForInitialLoad = translationSelectorOptionsPanel;
@@ -1317,33 +1430,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (targetSelectorForInitialLoad) targetSelectorForInitialLoad.value = firstValidOption;
                 await activateTranslation(firstValidOption);
              } else {
-                console.warn("No valid translations found to activate initially after checking first option.");
-                await setActiveVerseList(); // This will call displayVerse
+                console.warn("No valid translations found to activate initially.");
+                await setActiveVerseList(); 
              }
         } else {
              console.warn("No translations available in DB during initialization.");
-             await setActiveVerseList(); // This will call displayVerse
+             await setActiveVerseList(); 
         }
         
-        // Final explicit update for controls & progress bar AFTER all data (collections, translations)
-        // and initial verse display logic has run.
-        if (currentViewMode === VIEW_MODE_FULL_COLLECTION) {
+        const firstTimerButton = allTimerButtonsInOptions.length > 0 ? allTimerButtonsInOptions[0] : null;
+        if (firstTimerButton?.disabled) { 
             setControlsState(false);
-        } else if (activeVerseList.length > 0 && currentVerseIndex >=0) {
-            // setControlsState(true) and resetAndStartTimers() would have been called by displayVerse if content loaded.
-            // If not, ensure it's still false.
-            const firstTimerButton = allTimerButtonsInOptions.length > 0 ? allTimerButtonsInOptions[0] : null;
-            if (firstTimerButton?.disabled) { // If displayVerse decided controls should be off
-                setControlsState(false);
-            } else { // Otherwise, if displayVerse decided controls are on.
-                setControlsState(true);
-                 if (!isPaused) resetAndStartTimers(); // Only restart if not paused initially.
-            }
-        } else {
-            setControlsState(false);
+        } else { 
+            setControlsState(true);
+             if (!isPaused) resetAndStartTimers(); 
         }
         updateProgressBar();
-
 
         if (statusMessageElement?.textContent === "Initializing...") {
             appShowStatus("", false, 1);
