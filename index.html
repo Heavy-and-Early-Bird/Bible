@@ -64,8 +64,8 @@
         <!-- Icon set by JS -->
     </button>
 
-    <!-- Main Content Area (ID is important for audiovisual_integrations.js) -->
-    <main id="mainContentArea" class="content-area">
+    <!-- Main Content Area (ID is important, and now has a class) -->
+    <main id="mainContentArea" class="content-area av-background-target">
         <div id="verse-text" class="verse-text-display" data-no-verses-message="Please import a Bible and/or select a translation in Settings.">
             <!-- Content injected by JS -->
         </div>
@@ -148,46 +148,13 @@
                 </div>
                 <hr class="settings-hr">
 
-                <!-- Audiovisual Settings Section -->
+                <!-- Audiovisual Settings Section (NOW A LINK) -->
                 <div class="settings-section">
                     <h4>Audiovisual</h4>
-                    <div class="settings-modal-item">
-                        <label for="bgImageSelector">Verse Background Image:</label>
-                        <select id="bgImageSelector">
-                            <option value="none">None</option>
-                            <!-- Populated by JS -->
-                        </select>
-                    </div>
-                    <div class="settings-modal-item checkbox-item">
-                        <input type="checkbox" id="bgImageOverlayToggle">
-                        <label for="bgImageOverlayToggle">Enable Dark Overlay on Image</label>
-                    </div>
-                    <div class="settings-modal-item">
-                        <label for="bgImageOverlayOpacitySlider" id="bgImageOverlayOpacityLabel">Overlay Opacity: 50%</label>
-                        <input type="range" id="bgImageOverlayOpacitySlider" min="0.1" max="0.9" value="0.5" step="0.05" title="Adjust Overlay Opacity">
-                    </div>
-                     <div class="settings-modal-item">
-                        <label for="bgImageBlurSlider" id="bgImageBlurLabel">Image Blur: 0px</label>
-                        <input type="range" id="bgImageBlurSlider" min="0" max="20" value="0" step="1" title="Adjust Background Image Blur">
-                    </div>
-
-                    <div class="settings-modal-item">
-                        <label for="verseSoundSelector">Verse Change Sound:</label>
-                        <select id="verseSoundSelector">
-                            <option value="none">None</option>
-                            <!-- Populated by JS -->
-                        </select>
-                    </div>
-                    <div class="settings-modal-item">
-                        <label for="bgMusicSelector">Background Music:</label>
-                        <select id="bgMusicSelector">
-                            <option value="none">None</option>
-                            <!-- Populated by JS -->
-                        </select>
-                    </div>
-                    <div class="settings-modal-item">
-                        <label for="bgMusicVolumeSlider" id="bgMusicVolumeLabel">Music Volume: 50%</label>
-                        <input type="range" id="bgMusicVolumeSlider" min="0" max="1" value="0.5" step="0.01" title="Adjust Background Music Volume">
+                    <p style="font-size:0.9rem; margin-bottom:15px;">Configure background images, sounds, and music. This must be enabled to work.</p>
+                    <div class="settings-item-inline" style="justify-content: flex-start; gap: 10px;">
+                        <button id="toggleAVSystemBtn" class="dm-button">Enable</button>
+                        <a href="audiovisual_settings.html" class="data-manager-link-button">Open Audiovisual Setup</a>
                     </div>
                 </div>
                 <hr class="settings-hr">
@@ -243,21 +210,39 @@
         </div>
     </div>
 
-    <!-- Collection Note Modal -->
-    <div id="collectionNoteModal" class="modal">
-        <div class="modal-content" style="max-width: 600px;">
-            <div class="modal-header">
-                <h3 id="collectionNoteModalTitle" class="modal-title">Collection Note</h3>
-                <button id="modalCloseBtnCollectionNote" class="modal-close-btn" title="Close Note Editor">×</button>
-            </div>
-            <div class="modal-body">
-                <textarea id="modalNoteTextarea" placeholder="Enter notes for this collection..." title="Collection Note"></textarea>
-            </div>
-            <div class="modal-footer" style="justify-content: space-between;">
-                <button id="modalDeleteNoteBtn" class="dm-button" style="background-color: var(--brand-color);">Delete Note</button>
-                <div>
-                    <button id="modalCancelNoteBtn" class="dm-button" style="background-color: grey; margin-right: 10px;">Cancel</button>
-                    <button id="modalSaveNoteBtn" class="dm-button">Save Note</button>
+    <!-- Notes Modal (NEW Accordion Structure) -->
+    <div id="notesModal" class="modal">
+        <div class="modal-content" style="max-width: 750px;">
+            <!-- REMOVED MODAL HEADER, MOVED CLOSE BUTTON INSIDE -->
+            <button id="modalCloseBtnNotes" class="modal-close-btn modal-close-btn-corner" title="Close Notes">×</button>
+            <div class="modal-body" id="notesModalBody">
+                <!-- Accordion Structure -->
+                <div class="notes-accordion">
+                    <!-- Accordion 1: Note Manager -->
+                    <div class="notes-accordion-header" data-target="#noteManagerContent">Note Manager</div>
+                    <div id="noteManagerContent" class="notes-accordion-content">
+                        <div class="note-manager-controls">
+                            <input type="text" id="noteSearchInput" placeholder="Create, search, or select a note (e.g., 'folder\note name')...">
+                            <button id="addNewNoteBtn" class="dm-button" title="Create new note with this name" style="display: none;">Add</button>
+                        </div>
+                        <ul id="noteList" class="note-list">
+                            <!-- Note list populated by JS -->
+                        </ul>
+                    </div>
+
+                    <!-- Accordion 2: Note Editor -->
+                    <div class="notes-accordion-header" data-target="#noteEditorContent">Note Editor</div>
+                    <div id="noteEditorContent" class="notes-accordion-content">
+                        <div class="note-editor-header">
+                            <span id="currentNoteNameDisplay">No note loaded</span>
+                            <div class="note-editor-actions">
+                                <button id="toggleNotePreviewBtn" class="dm-button-small">Preview</button>
+                                <button id="saveNoteBtn" class="dm-button">Save</button>
+                            </div>
+                        </div>
+                        <textarea id="noteEditorTextarea" placeholder="Start writing your note here. Basic Markdown is supported."></textarea>
+                        <div id="notePreviewArea" class="note-preview" style="display: none;"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -266,6 +251,16 @@
     <!-- Quick Seek Panel -->
     <div id="quickSeekPanel" class="quick-seek-panel">
         <div id="quickSeekControlsContainer" class="quick-seek-controls-container">
+            <!-- Go To Reference (Full Bible Mode Only) -->
+            <div id="quickSeekGoToContainer">
+                <input type="text" id="quickSeekReferenceInput" placeholder="Go to (e.g., John 3:16)">
+                <button id="quickSeekGoBtn" title="Go to this reference">Go</button>
+                <button id="openReferencePickerBtn" class="icon-button" title="Open Reference Picker">
+                    <svg viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V6h5.17l2 2H20v10z"></path></svg>
+                </button>
+            </div>
+
+            <!-- Timer/Collection Navigation Controls -->
             <div class="options-timer-controls">
                 <button id="timerPrevVerseBtn" title="Previous Verse" class="icon-button qsTimerPrevVerseBtn" disabled>
                     <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"></path></svg>
@@ -279,9 +274,29 @@
                 <button id="randomVerseBtn" title="Random Verse" class="icon-button qsRandomVerseBtn" disabled>
                     <svg viewBox="0 0 24 24"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41L19 19.59 17.59 21l-5.17-5.17-1.42 1.41z"></path></svg>
                 </button>
-                <button id="quickSeekNoteBtn" title="View/Edit Collection Note" class="icon-button qsNoteBtn" disabled>
+                <button id="quickSeekNoteBtn" title="View/Edit Notes" class="icon-button qsNoteBtn" disabled>
                     <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"></path></svg>
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEW: Reference Picker Modal -->
+    <div id="referencePickerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Select a Reference</h3>
+                <button id="modalCloseBtnRefPicker" class="modal-close-btn" title="Close Picker">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="ref-picker-controls">
+                    <select id="refPickerBook" title="Select Book"></select>
+                    <select id="refPickerChapter" title="Select Chapter"></select>
+                    <select id="refPickerVerse" title="Select Verse"></select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="refPickerGoBtn" class="dm-button">Go to Reference</button>
             </div>
         </div>
     </div>
@@ -289,8 +304,8 @@
 
     <!-- JavaScript Files -->
     <script src="scripts/script.js"></script>
-    <script src="scripts/audiovisual_integrations.js"></script> <!-- Already present -->
-    <!-- audiobible_tts_script.js is for audiobible_tts.html, not directly linked here -->
+    <script src="scripts/notes_manager.js"></script>
+    <script src="scripts/audiovisual_integrations.js"></script>
     <script src="scripts/main_app_script.js"></script>
 </body>
 </html>
