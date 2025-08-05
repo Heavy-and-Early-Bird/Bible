@@ -356,15 +356,11 @@ body.fullscreen-active #mainContentArea {
     align-items: center;
 }
 
-/* GENERALIZED Audiovisual background target */
+/* GENERALIZED Audiovisual background target - REVISED FOR BLUR FIX */
 .av-background-target {
-    background-size: cover;
-    background-position: center center;
-    background-repeat: no-repeat;
     position: relative;
-    transition: filter 0.3s ease-in-out, background-image 0.3s ease-in-out;
 }
-.av-background-target::before {
+.av-background-target::before { /* OVERLAY LAYER */
     content: '';
     position: absolute;
     top: 0;
@@ -373,20 +369,34 @@ body.fullscreen-active #mainContentArea {
     height: 100%;
     background-color: #000;
     opacity: 0;
-    z-index: 0;
+    z-index: 1; /* Sits above the background image */
     transition: opacity 0.3s ease-in-out;
     pointer-events: none;
 }
 .av-background-target.av-has-background-image {
-    filter: blur(var(--av-bg-image-blur)); 
-    -webkit-filter: blur(var(--av-bg-image-blur));
+    /* Marker class, no styles needed here now. */
 }
 .av-background-target.av-overlay-enabled::before {
     opacity: var(--av-bg-image-overlay-opacity);
 }
-.av-background-target > * {
+/* This pseudo-element now holds the background image and the blur */
+.av-background-target::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background-image: inherit; /* Inherits background-image from the parent */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    filter: blur(var(--av-bg-image-blur));
+    -webkit-filter: blur(var(--av-bg-image-blur));
+    z-index: -1; /* Sits behind everything */
+    transition: filter 0.3s ease-in-out, background-image 0.3s ease-in-out;
+}
+.av-background-target > * { /* CONTENT LAYER */
     position: relative;
-    z-index: 1;
+    z-index: 2; /* Sits above the overlay and background */
 }
 
 
@@ -415,11 +425,9 @@ body.fullscreen-active #mainContentArea {
     z-index: 1;
 }
 body.fullscreen-active #mainContentArea .verse-text-display {
-    max-height: calc(100% - 40px); 
-    width: 100%;                   
-    max-width: 95vw;               
-    margin: 0 auto;                
-    border-radius: 0; 
+    max-height: calc(100% - 40px);
+    margin: 0 auto;
+    border-radius: 0;
     box-shadow: none;
     background-color: var(--verse-card-bg);
 }
@@ -871,13 +879,10 @@ hr.settings-hr {
 }
 
 
-/* --- Multi-Translation View Styles --- */
+/* --- Multi-Translation View Styles (REVISED) --- */
 .multi-translation-view .multi-trans-item {
     margin-bottom: 20px;
-    padding: 15px;
-    background-color: rgba(var(--brand-color-rgb), 0.05); 
-    border: 1px solid var(--options-panel-border);
-    border-radius: 6px;
+    padding: 0;
 }
 .multi-translation-view .multi-trans-item:last-child {
     margin-bottom: 0;
@@ -1320,8 +1325,6 @@ hr.settings-hr {
     padding: 20px;
     border-radius: 5px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-    backdrop-filter: blur(var(--av-bg-image-blur));
-    -webkit-backdrop-filter: blur(var(--av-bg-image-blur));
     transition: background-color 0.3s ease;
 }
 .preview-text-content h3 { color: var(--reference-color); }
@@ -1377,7 +1380,6 @@ hr.settings-hr {
     }
     body.fullscreen-active #mainContentArea .verse-text-display {
         max-height: calc(100% - 30px);
-        max-width: 100vw; 
     }
     .verse-text-display {
         max-height: calc(100vh - 160px); 
@@ -1640,4 +1642,67 @@ hr.settings-hr {
 }
 .note-folder-item.open > .note-folder-content {
     display: block;
+}
+
+/* --- Settings Modal Tabs --- */
+.settings-tab-nav {
+    display: flex;
+    border-bottom: 1px solid var(--options-panel-border);
+    margin-bottom: 20px;
+}
+.settings-tab-button {
+    padding: 10px 15px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: var(--text-color);
+    font-size: 0.95rem;
+    transition: color 0.2s, border-color 0.2s;
+    margin-bottom: -1px; /* Overlap the main border */
+}
+.settings-tab-button:hover {
+    color: var(--brand-color);
+}
+.settings-tab-button.active {
+    color: var(--brand-color);
+    border-color: var(--brand-color);
+    font-weight: 600;
+}
+.settings-tab-pane {
+    display: none;
+}
+.settings-tab-pane.active {
+    display: block;
+}
+/* External link icon */
+.data-manager-link-button, .info-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px; /* Space between text and icon */
+}
+.external-link-icon {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+}
+/* Info tab styling */
+#settingsInfoTab h4 {
+    color: var(--brand-color);
+    margin-top: 15px;
+    margin-bottom: 10px;
+}
+#settingsInfoTab p, #settingsInfoTab ul {
+    font-size: 0.9em;
+    opacity: 0.9;
+}
+#settingsInfoTab ul {
+    padding-left: 20px;
+}
+#settingsInfoTab .info-link {
+    color: var(--reference-color);
+    text-decoration: none;
+}
+#settingsInfoTab .info-link:hover {
+    text-decoration: underline;
 }
