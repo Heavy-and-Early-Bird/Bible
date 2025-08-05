@@ -325,17 +325,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function openAccordionSection(headerToOpen) {
-        accordionHeaders.forEach(header => {
-            const content = document.querySelector(header.dataset.target);
-            if (header === headerToOpen) {
-                header.classList.add('active');
-                if (content) content.style.display = 'block';
-            } else {
-                header.classList.remove('active');
-                if (content) content.style.display = 'none';
+    // Loop through each header in the accordion
+    accordionHeaders.forEach(header => {
+        const content = document.querySelector(header.dataset.target);
+        if (header === headerToOpen) {
+            header.classList.add('active');
+            if (content) {
+                content.style.display = 'block'; // Ensure this is always shown
             }
-        });
-    }
+        } else {
+            header.classList.remove('active');
+            if (content) {
+                content.style.display = 'none'; // Hide all others
+            }
+        }
+    });
+}
 
     // --- Event Listeners ---
     if (insertRefBtn) {
