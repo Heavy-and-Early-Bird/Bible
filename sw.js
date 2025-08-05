@@ -32,16 +32,16 @@ const urlsToCache = [
   'scripts/openbible_topics_importer.js',
 
   // App Icons (as defined in manifest.json)
-  'assets/icons/icon-192x192.png',
-  'assets/icons/icon-512x512.png',
+  'assets/icons/icon.png',
+  //'assets/icons/icon-512x512.png',
 
   // Default Media Assets
-  'assets/images/default1.jpg',
-  'assets/images/default2.jpg',
-  'assets/images/default3.jpg',
-  'assets/sounds/effects/default-chime.mp3',
-  'assets/sounds/effects/default-page-turn.mp3',
-  'assets/sounds/music/default-ambient.mp3',
+//  'assets/images/default1.jpg',
+//  'assets/images/default2.jpg',
+//  'assets/images/default3.jpg',
+//  'assets/sounds/effects/default-chime.mp3',
+//  'assets/sounds/effects/default-page-turn.mp3',
+//  'assets/sounds/music/default-ambient.mp3',
 
   // Google Fonts URL - Caching this can be tricky, but let's add it for better offline performance.
   'https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@300;400;600&family=Roboto+Slab:wght@400;700&display=swap'
