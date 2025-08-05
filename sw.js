@@ -15,8 +15,8 @@ const urlsToCache = [
   'manifest.json',
 
   // CSS Files
-  'css/style.css',
-  'css/exporter_style.css',
+  'styles/style.css',
+  'styles/exporter_style.css',
 
   // JavaScript Files
   'scripts/script.js',
