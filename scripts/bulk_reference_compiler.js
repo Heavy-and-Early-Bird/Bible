@@ -108,63 +108,54 @@ document.addEventListener('DOMContentLoaded', async () => {
                 showBulkStatus(`Processing: "${originalPrompt}"...`, false, 0);
                 let promptTitle = originalPrompt; // Default title
                 let versesForThisPrompt = [];
+                let promptHandled = false;
 
-                // Use robust extractor for initial parsing of the prompt
-                // `performRobustExtraction` calls `parseBibleReferenceWithNote` internally.
-                const extractionResult = await window.performRobustExtraction(originalPrompt, window.parseBibleReferenceWithNote);
+                // --- NEW: First, attempt a simple "Book Chapter" parse ---
+                const simpleChapterMatch = originalPrompt.trim().match(/^(?:([1-3])\s*)?([a-zA-Z\s]+?)\s+(\d+)$/);
+                if (simpleChapterMatch && !originalPrompt.includes(':') && !originalPrompt.includes('.')) {
+                    const bookPart = ((simpleChapterMatch[1] || '') + " " + simpleChapterMatch[2].trim()).trim();
+                    const fullBookName = window.getFullBookName(bookPart); // from extractor_script.js
+                    const chapterNum = Number(simpleChapterMatch[3]);
 
-                if (extractionResult.parsedReferences && extractionResult.parsedReferences.length > 0) {
-                    for (const refObj of extractionResult.parsedReferences) {
-                        // refObj is { book (full normalized from getFullBookName), chapter, startVerse, endVerse, referenceString, sourceText }
-                        let actualStartVerse = Number(refObj.startVerse);
-                        let actualEndVerse = Number(refObj.endVerse);
-                        
-                        // --- INTERNAL WHOLE CHAPTER DETECTION & EXPANSION ---
-                        // Heuristic: If parsed as V1-1 AND original prompt for THIS part looked like "Book Chapter"
-                        // (e.g., `refObj.sourceText` from `performRobustExtraction` was just "Genesis 1")
-                        // then expand to the whole chapter.
-                        // `performRobustExtraction` returns sourceText which is the *specific segment* it parsed for that refObj.
-                        const sourceTextSimplified = refObj.sourceText.trim().toLowerCase();
-                        const chapterOnlyPatternTest = /^(?:[1-3]\s*)?[a-zA-Z\s]+?\s+\d+$/; // "Book C" "1 Book C" "Song of Sol 1"
-                        
-                        if (actualStartVerse === 1 && actualEndVerse === 1 && 
-                            chapterOnlyPatternTest.test(sourceTextSimplified) &&
-                            !sourceTextSimplified.includes(':') && !sourceTextSimplified.includes('.') && !sourceTextSimplified.includes('-')) {
-                            
-                            console.log(`Bulk Compiler: Expanding "${refObj.sourceText}" (parsed as ${refObj.referenceString}) to full chapter.`);
-                            promptTitle = `${refObj.book} Chapter ${refObj.chapter}`;
-                            const versesInChapter = bibleVersesList.filter(
-                                v => v._book.toLowerCase() === refObj.book.toLowerCase() && // refObj.book is already full name
-                                     Number(v._chapter) === Number(refObj.chapter)
-                            );
-                            if (versesInChapter.length > 0) {
-                                actualStartVerse = 1;
-                                actualEndVerse = Math.max(...versesInChapter.map(v => Number(v._verse)));
-                            } else {
-                                console.warn(`No verses found to expand chapter for: ${promptTitle}`);
-                                // Keep original 1-1 if chapter expansion fails, it'll just be verse 1
-                            }
-                        } else {
-                            promptTitle = refObj.referenceString; // Use the specific range as title
+                    if (fullBookName && chapterNum) {
+                        console.log(`Bulk Compiler: Matched simple chapter "${originalPrompt}". Expanding.`);
+                        promptTitle = `${fullBookName} Chapter ${chapterNum}`;
+                        const versesInChapter = bibleVersesList.filter(
+                            v => v._book.toLowerCase() === fullBookName.toLowerCase() && Number(v._chapter) === chapterNum
+                        );
+                        if (versesInChapter.length > 0) {
+                            // Add all verse texts, sorted by verse number
+                            versesInChapter.sort((a,b) => Number(a._verse) - Number(b._verse)).forEach(v => {
+                                versesForThisPrompt.push(v.text);
+                            });
+                            promptHandled = true;
                         }
-                        // --- End of Chapter Expansion ---
-
-                        // Fetch verses for the (potentially expanded) range
-                        for (let vNum = actualStartVerse; vNum <= actualEndVerse; vNum++) {
-                            const foundVerse = bibleVersesList.find(
-                                v => v._book.toLowerCase() === refObj.book.toLowerCase() &&
-                                     Number(v._chapter) === Number(refObj.chapter) &&
-                                     Number(v._verse) === Number(vNum)
-                            );
-                            if (foundVerse && foundVerse.text) {
-                                versesForThisPrompt.push(foundVerse.text);
-                            }
-                        }
-                    } // End loop over parsedReferences from ONE prompt
-                } else {
-                     console.warn(`Prompt "${originalPrompt}" did not yield any parsable references from robust extractor.`);
+                    }
                 }
 
+                // --- If not handled as a simple chapter, use the robust extractor ---
+                if (!promptHandled) {
+                    const extractionResult = await window.performRobustExtraction(originalPrompt, window.parseBibleReferenceWithNote);
+
+                    if (extractionResult.parsedReferences && extractionResult.parsedReferences.length > 0) {
+                        promptTitle = extractionResult.parsedReferences.map(r => r.referenceString).join('; ');
+
+                        for (const refObj of extractionResult.parsedReferences) {
+                            for (let vNum = Number(refObj.startVerse); vNum <= Number(refObj.endVerse); vNum++) {
+                                const foundVerse = bibleVersesList.find(
+                                    v => v._book.toLowerCase() === refObj.book.toLowerCase() &&
+                                         Number(v._chapter) === Number(refObj.chapter) &&
+                                         Number(v._verse) === Number(vNum)
+                                );
+                                if (foundVerse && foundVerse.text) {
+                                    versesForThisPrompt.push(foundVerse.text);
+                                }
+                            }
+                        }
+                    } else {
+                         console.warn(`Prompt "${originalPrompt}" did not yield any parsable references from robust extractor.`);
+                    }
+                }
 
                 if (versesForThisPrompt.length > 0) {
                     if (compiledOutput) compiledOutput += "\n\n---\n\n"; // Separator between prompts
@@ -224,7 +215,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function initializeBulkCompiler() {
         showBulkStatus("Initializing Bulk Compiler...", false, 0);
         // Apply theme (assuming applyTheme and SELECTED_THEME_LS_KEY are global from script.js)
-        const savedTheme = localStorage.getItem('SELECTED_THEME_LS_KEY') || 'dark'; // Use the correct key
+        const savedTheme = localStorage.getItem('selectedTheme') || 'dark'; // Use the correct key
         if (typeof applyTheme === 'function') applyTheme(savedTheme);
         else console.warn("applyTheme function not found for Bulk Compiler.");
 

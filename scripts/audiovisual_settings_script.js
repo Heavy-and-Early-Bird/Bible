@@ -10,6 +10,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.warn("applyTheme function from script.js is missing.");
     }
 
+    // --- NEW: Default Assets Definition ---
+    const DEFAULT_ASSETS = {
+        images: [
+            { name: 'Abstract Light Rays', path: 'assets/images/default1.jpg' },
+            { name: 'Quiet Lake', path: 'assets/images/default2.jpg' },
+            { name: 'Mountain Sunrise', path: 'assets/images/default3.jpg' }
+        ],
+        effects: [
+            { name: 'Gentle Chime', path: 'assets/sounds/effects/default-chime.mp3' },
+            { name: 'Page Turn', path: 'assets/sounds/effects/default-page-turn.mp3' }
+        ],
+        music: [
+            { name: 'Peaceful Ambient', path: 'assets/sounds/music/default-ambient.mp3' }
+        ]
+    };
+
     // --- DOM Elements ---
     const avStatusMessage = document.getElementById('avStatusMessage');
     const avPreviewArea = document.getElementById('avPreviewArea');
@@ -150,10 +166,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         else customEffectsList.innerHTML = '<li>No custom sound effects added.</li>';
     }
 
+    // MODIFIED: To support default assets
     async function populateAllSelectors() {
-        const populate = async (selector, customType) => {
-            selector.innerHTML = '';
-            selector.add(new Option('None', 'none'));
+        const populate = async (selector, customType, defaults) => {
+            selector.querySelectorAll('optgroup').forEach(group => group.remove());
+
+            if (defaults && defaults.length > 0) {
+                const defaultGroup = document.createElement('optgroup');
+                defaultGroup.label = 'Default Assets';
+                defaults.forEach(asset => {
+                    defaultGroup.appendChild(new Option(asset.name, asset.path));
+                });
+                selector.appendChild(defaultGroup);
+            }
+
             const customAssets = await getCustomAssets(customType);
             if (customAssets.length > 0) {
                 const customGroup = document.createElement('optgroup');
@@ -165,12 +191,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 selector.appendChild(customGroup);
             }
         };
-        bgImageSelector.innerHTML = '';
-        bgImageSelector.add(new Option('None', 'none'));
-        bgImageSelector.add(new Option('Random from List', 'random'));
-        await populate(bgImageSelector, 'image');
-        await populate(verseSoundSelector, 'effect');
-        await populate(bgMusicSelector, 'music');
+
+        await populate(bgImageSelector, 'image', DEFAULT_ASSETS.images);
+        await populate(verseSoundSelector, 'effect', DEFAULT_ASSETS.effects);
+        await populate(bgMusicSelector, 'music', DEFAULT_ASSETS.music);
+        
         await loadAndApplySettings();
     }
 
@@ -195,6 +220,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     imageUrl = asset.isUrl ? asset.data : URL.createObjectURL(asset.data);
                     if (!asset.isUrl) currentPreviewObjectUrl = imageUrl;
                 }
+            } else { // It's a default asset path
+                imageUrl = bgImageValue;
             }
             if(imageUrl) avPreviewArea.style.backgroundImage = `url('${imageUrl}')`;
         }
@@ -235,6 +262,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const [, idStr] = verseSoundValue.split(':');
                 const asset = await getCustomAssetById(parseInt(idStr, 10));
                 if (asset) soundUrl = asset.isUrl ? asset.data : URL.createObjectURL(asset.data);
+            } else { // It's a default asset path
+                soundUrl = verseSoundValue;
             }
             if (soundUrl) {
                 previewSoundEffectAudio.src = soundUrl;
@@ -248,6 +277,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             const [, idStr] = bgMusicValue.split(':');
             const asset = await getCustomAssetById(parseInt(idStr, 10));
             if (asset) musicUrl = asset.isUrl ? asset.data : URL.createObjectURL(asset.data);
+        } else if (bgMusicValue !== 'none') { // It's a default asset path
+            musicUrl = bgMusicValue;
         }
         
         if (bgMusicValue === 'none' || !musicUrl) {
@@ -289,7 +320,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         setSelectValue(bgImageSelector, localStorage.getItem(LS_SELECTED_BG_IMAGE) || 'none');
         bgImageSlideshowToggle.checked = localStorage.getItem(LS_SLIDESHOW_ENABLED) === 'true';
-        bgImageSlideshowInterval.value = localStorage.getItem(LS_SLIDESHOW_INTERVAL) || 10;
+        const intervalSeconds = localStorage.getItem(LS_SLIDESHOW_INTERVAL) || 10;
+        bgImageSlideshowInterval.value = intervalSeconds;
+        if (intervalSeconds >= 60) {
+            const minutes = (intervalSeconds / 60).toFixed(1).replace('.0', '');
+            bgImageSlideshowIntervalLabel.textContent = `Slideshow Interval: ${minutes} min`;
+        } else {
+            bgImageSlideshowIntervalLabel.textContent = `Slideshow Interval: ${intervalSeconds} sec`;
+        }
         bgImageOverlayToggle.checked = localStorage.getItem(LS_BG_IMAGE_OVERLAY_ENABLED) === 'true';
         bgImageOverlayOpacitySlider.value = localStorage.getItem(LS_BG_IMAGE_OVERLAY_OPACITY) || 0.5;
         bgImageBlurSlider.value = localStorage.getItem(LS_BG_IMAGE_BLUR) || 0;
@@ -299,7 +337,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         bgMusicPlaylistMode.value = localStorage.getItem(LS_BG_MUSIC_PLAYLIST_MODE) || 'repeat';
         bgMusicVolumeSlider.value = localStorage.getItem(LS_BG_MUSIC_VOLUME) || 0.5;
 
-        bgImageSlideshowIntervalLabel.textContent = `Slideshow Interval (sec): ${bgImageSlideshowInterval.value}`;
         bgImageOverlayOpacityLabel.textContent = `Overlay Opacity: ${Math.round(bgImageOverlayOpacitySlider.value * 100)}%`;
         bgImageBlurLabel.textContent = `Image Blur: ${bgImageBlurSlider.value}px`;
         verseCardOpacityLabel.textContent = `Verse Card Opacity: ${Math.round(verseCardOpacitySlider.value * 100)}%`;
@@ -325,12 +362,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const setupSlider = (slider, label, labelTemplate) => {
             slider.addEventListener('input', e => {
-                label.textContent = labelTemplate.replace('{}', Math.round(e.target.value * 100)).replace('{px}', e.target.value);
+                if (e.target.id === 'bgImageSlideshowInterval') {
+                    const seconds = parseInt(e.target.value, 10);
+                    if (seconds >= 60) {
+                        const minutes = (seconds / 60).toFixed(1).replace('.0', '');
+                        label.textContent = `Slideshow Interval: ${minutes} min`;
+                    } else {
+                        label.textContent = `Slideshow Interval: ${seconds} sec`;
+                    }
+                } else {
+                    label.textContent = labelTemplate.replace('{}', Math.round(e.target.value * 100)).replace('{px}', e.target.value);
+                }
                 saveAndPreview();
             });
         };
 
-        setupSlider(bgImageSlideshowInterval, bgImageSlideshowIntervalLabel, 'Slideshow Interval (sec): {px}');
+        setupSlider(bgImageSlideshowInterval, bgImageSlideshowIntervalLabel, 'Slideshow Interval: {} sec');
         setupSlider(bgImageOverlayOpacitySlider, bgImageOverlayOpacityLabel, 'Overlay Opacity: {}%');
         setupSlider(bgImageBlurSlider, bgImageBlurLabel, 'Image Blur: {px}px');
         setupSlider(verseCardOpacitySlider, verseCardOpacityLabel, 'Verse Card Opacity: {}%');
@@ -344,6 +391,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (typeof applyTheme === 'function') {
                 applyTheme(localStorage.getItem('selectedTheme') || 'dark');
             }
+            bgImageSelector.innerHTML = '';
+            bgImageSelector.add(new Option('None', 'none'));
+            bgImageSelector.add(new Option('Random from List', 'random'));
+            verseSoundSelector.innerHTML = '';
+            verseSoundSelector.add(new Option('None', 'none'));
+            bgMusicSelector.innerHTML = '';
+            bgMusicSelector.add(new Option('None', 'none'));
+            
             await renderAllAssets();
             await populateAllSelectors();
             setupEventListeners();

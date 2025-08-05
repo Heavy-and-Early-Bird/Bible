@@ -63,6 +63,7 @@ async function getAssetUrl(assetValue) {
             return null;
         }
     }
+    // If not a custom asset, it's a default path. Return it directly.
     return assetValue;
 }
 

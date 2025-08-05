@@ -1,100 +1,117 @@
 // scripts/notes_manager.js
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     // --- Dependency Checks ---
-    if (typeof initDB !== 'function' || typeof saveNoteToDB !== 'function' || typeof getNoteFromDB !== 'function' || typeof getAllNotesFromDB !== 'function' || typeof deleteNoteFromDB !== 'function') {
-        console.error("Critical Note DB functions from script.js are missing.");
+    if (typeof initDB !== 'function' || typeof saveNoteToDB !== 'function' || typeof getAllNotesFromDB !== 'function' || typeof deleteNoteFromDB !== 'function') {
+        console.error("Critical DB functions from script.js are missing for Notes Manager.");
         return;
+    }
+    // Check if the third-party Markdown library is loaded
+    if (typeof marked !== 'function') {
+        console.error("marked.js library not found. Note preview will not work.");
     }
 
     // --- DOM Elements ---
     const notesModal = document.getElementById('notesModal');
-    const closeModalBtn = document.getElementById('modalCloseBtnNotes');
-    const accordionHeaders = document.querySelectorAll('.notes-accordion-header');
+    const modalCloseBtnNotes = document.getElementById('modalCloseBtnNotes');
     
-    // Manager Elements
-    const noteManagerContent = document.getElementById('noteManagerContent');
+    // Accordion Elements
+    const accordionHeaders = notesModal.querySelectorAll('.notes-accordion-header');
+
+    // Note Manager Elements
     const noteSearchInput = document.getElementById('noteSearchInput');
     const addNewNoteBtn = document.getElementById('addNewNoteBtn');
     const noteList = document.getElementById('noteList');
-    
-    // Editor Elements
-    const noteEditorContent = document.getElementById('noteEditorContent');
+
+    // Note Editor Elements
     const currentNoteNameDisplay = document.getElementById('currentNoteNameDisplay');
     const toggleNotePreviewBtn = document.getElementById('toggleNotePreviewBtn');
     const saveNoteBtn = document.getElementById('saveNoteBtn');
     const noteEditorTextarea = document.getElementById('noteEditorTextarea');
     const notePreviewArea = document.getElementById('notePreviewArea');
+    const insertRefBtn = document.getElementById('insertRefBtn');
+    const insertRefWithTextBtn = document.getElementById('insertRefWithTextBtn');
 
-    // --- State ---
-    let allNotesCache = [];
-    let currentLoadedNoteName = null;
-    let isPreviewMode = false;
-    const LS_LAST_OPENED_NOTE = 'notes_lastOpenedNote';
+
+    // --- State Variables ---
+    let currentNote = null; // Object { name, content, lastModified }
+    let isPreviewing = false;
+    let allNotes = []; // Cached list of all notes
     
-    const addIconSVG = `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"></path></svg>`;
-    const loadIconSVG = `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"></path></svg>`;
-    const deleteIconSVG = `<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"></path></svg>`;
-
-
-    // --- Accordion Logic ---
-    function switchAccordion(targetContentElement) {
-        document.querySelectorAll('.notes-accordion-content').forEach(el => el.style.display = 'none');
-        accordionHeaders.forEach(el => el.classList.remove('active'));
-        
-        if (targetContentElement) {
-            targetContentElement.style.display = 'block';
-            const correspondingHeader = document.querySelector(`.notes-accordion-header[data-target="#${targetContentElement.id}"]`);
-            if(correspondingHeader) correspondingHeader.classList.add('active');
+    // --- Status Function ---
+    function showNoteStatus(message, isError = false, duration = 3000) {
+        // This could be more robust, e.g., using a dedicated status element in the modal
+        console.log(`Note Status (${isError ? 'Error' : 'Info'}): ${message}`);
+        // For user feedback, we can use the main app's status bar if available
+        if (typeof appShowStatus === 'function') {
+            appShowStatus(message, isError, duration);
         }
     }
+    
+    // Helper to insert text at cursor in a textarea
+    function insertTextAtCursor(textarea, textToInsert) {
+        if (!textarea) return;
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const text = textarea.value;
+        textarea.value = text.substring(0, start) + textToInsert + text.substring(end);
+        textarea.selectionStart = textarea.selectionEnd = start + textToInsert.length;
+        textarea.focus();
+    }
 
-    accordionHeaders.forEach(header => {
-        header.addEventListener('click', () => {
-            const target = document.querySelector(header.dataset.target);
-            switchAccordion(target);
-        });
-    });
-
-    // --- Note Manager Logic ---
-    async function refreshNoteCacheAndRender() {
-        allNotesCache = await getAllNotesFromDB();
-        renderNoteList();
+    // --- Core Logic ---
+    async function loadAllNotes() {
+        try {
+            allNotes = await getAllNotesFromDB();
+            renderNoteList();
+        } catch (error) {
+            showNoteStatus("Failed to load notes.", true);
+        }
     }
 
     function renderNoteList() {
-        const searchTerm = noteSearchInput.value.trim().toLowerCase();
-        let filteredNotes = allNotesCache;
-        if (searchTerm) {
-            filteredNotes = allNotesCache.filter(note => note.name.toLowerCase().includes(searchTerm));
-        }
-
         noteList.innerHTML = '';
+        const searchTerm = noteSearchInput.value.toLowerCase().trim();
+        const filteredNotes = allNotes.filter(note => note.name.toLowerCase().includes(searchTerm));
 
-        // --- NEW FOLDER LOGIC ---
-        const organized = {
-            folders: {},
-            standalone: []
-        };
+        const folders = {};
+        const rootNotes = [];
 
+        // Group notes into folders
         filteredNotes.forEach(note => {
-            // Note: The key in IndexedDB might be 'folder\\note', but JS reads it as 'folder\note'
-            const parts = note.name.split('\\');
-            if (parts.length === 2 && parts[0].trim() && parts[1].trim()) {
+            if (note.name.includes('\\')) {
+                const parts = note.name.split('\\');
                 const folderName = parts[0];
-                if (!organized.folders[folderName]) {
-                    organized.folders[folderName] = [];
+                if (!folders[folderName]) {
+                    folders[folderName] = [];
                 }
-                organized.folders[folderName].push(note);
+                folders[folderName].push(note);
             } else {
-                organized.standalone.push(note);
+                rootNotes.push(note);
             }
         });
 
-        // Render folders first, sorted
-        Object.keys(organized.folders).sort().forEach(folderName => {
-            const notesInFolder = organized.folders[folderName];
-            
+        const createNoteItem = (note) => {
+            const li = document.createElement('li');
+            li.className = 'note-list-item';
+            const displayName = note.name.includes('\\') ? note.name.split('\\').slice(1).join('\\') : note.name;
+            li.innerHTML = `
+                <span class="note-name">${displayName}</span>
+                <div class="note-item-actions">
+                    <button class="dm-button-small note-load-btn" title="Load Note">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M16.59 7.58L10 14.17l-3.59-3.58L5 12l5 5 8-8zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"></path></svg>
+                    </button>
+                    <button class="dm-button-small note-delete-btn" title="Delete Note">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"></path></svg>
+                    </button>
+                </div>`;
+            li.querySelector('.note-load-btn').addEventListener('click', () => loadNoteIntoEditor(note));
+            li.querySelector('.note-delete-btn').addEventListener('click', (e) => { e.stopPropagation(); handleDeleteNote(note.name); });
+            return li;
+        };
+        
+        // Render folders
+        Object.keys(folders).sort().forEach(folderName => {
             const folderLi = document.createElement('li');
             folderLi.className = 'note-folder-item';
             folderLi.innerHTML = `
@@ -102,218 +119,220 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span class="folder-toggle">▶</span>
                     <span class="folder-name">${folderName}</span>
                 </div>
-            `;
-            
-            const nestedUl = document.createElement('ul');
-            nestedUl.className = 'note-folder-content';
-
-            notesInFolder.sort((a,b) => a.name.localeCompare(b.name)).forEach(note => {
-                const noteLi = document.createElement('li');
-                noteLi.className = 'note-list-item';
-                const noteNameInFolder = note.name.split('\\')[1];
-                noteLi.innerHTML = `
-                    <span class="note-name" title="${note.name}">${noteNameInFolder}</span>
-                    <div class="note-item-actions">
-                        <button class="dm-button-small note-load-btn" data-name="${note.name}" title="Load this note">${loadIconSVG}</button>
-                        <button class="dm-button-small note-delete-btn" data-name="${note.name}" title="Delete this note">${deleteIconSVG}</button>
-                    </div>
-                `;
-                nestedUl.appendChild(noteLi);
+                <ul class="note-folder-content"></ul>`;
+            const contentUl = folderLi.querySelector('.note-folder-content');
+            folders[folderName].sort((a,b) => a.name.localeCompare(b.name)).forEach(note => {
+                contentUl.appendChild(createNoteItem(note));
             });
-
-            folderLi.appendChild(nestedUl);
-            noteList.appendChild(folderLi);
-
             folderLi.querySelector('.folder-header').addEventListener('click', () => {
                 folderLi.classList.toggle('open');
             });
+            noteList.appendChild(folderLi);
         });
 
-        // Render standalone notes next, sorted
-        organized.standalone.sort((a,b) => a.name.localeCompare(b.name)).forEach(note => {
-            const li = document.createElement('li');
-            li.className = 'note-list-item';
-            li.innerHTML = `
-                <span class="note-name" title="${note.name}">${note.name}</span>
-                <div class="note-item-actions">
-                    <button class="dm-button-small note-load-btn" data-name="${note.name}" title="Load this note">${loadIconSVG}</button>
-                    <button class="dm-button-small note-delete-btn" data-name="${note.name}" title="Delete this note">${deleteIconSVG}</button>
-                </div>
-            `;
-            noteList.appendChild(li);
+        // Render root notes
+        rootNotes.sort((a,b) => a.name.localeCompare(b.name)).forEach(note => {
+            noteList.appendChild(createNoteItem(note));
         });
-        
-        if (noteList.children.length === 0 && !searchTerm) {
-            noteList.innerHTML = '<li class="note-list-empty">No notes found. Create one above!</li>';
+    }
+
+    function loadNoteIntoEditor(note) {
+        currentNote = note;
+        currentNoteNameDisplay.textContent = note.name;
+        noteEditorTextarea.value = note.content || '';
+        if (isPreviewing) {
+            renderPreview();
+        }
+        showNoteStatus(`Loaded note: "${note.name}"`, false);
+        // Switch to editor tab
+        openAccordionSection(document.querySelector('.notes-accordion-header[data-target="#noteEditorContent"]'));
+    }
+
+    async function handleSaveNote() {
+        const content = noteEditorTextarea.value;
+        if (!currentNote) {
+            showNoteStatus("No note is loaded. Please create or load a note first.", true);
+            return;
         }
 
-        // Manage "Add" button visibility
-        const exactMatch = allNotesCache.some(note => note.name.toLowerCase() === searchTerm);
-        if (searchTerm && !exactMatch) {
-            addNewNoteBtn.style.display = 'inline-block';
-        } else {
-            addNewNoteBtn.style.display = 'none';
+        const noteToSave = {
+            ...currentNote,
+            content: content,
+            lastModified: new Date()
+        };
+
+        try {
+            await saveNoteToDB(noteToSave);
+            currentNote = noteToSave; // Update the in-memory version
+            // Update the main list as well
+            const noteIndex = allNotes.findIndex(n => n.name === currentNote.name);
+            if (noteIndex > -1) {
+                allNotes[noteIndex] = currentNote;
+            }
+            showNoteStatus(`Note "${currentNote.name}" saved.`, false);
+        } catch (error) {
+            showNoteStatus(`Error saving note: ${error.message}`, true);
         }
     }
 
-    noteSearchInput.addEventListener('input', renderNoteList);
+    async function handleAddNewNote() {
+        const name = noteSearchInput.value.trim();
+        if (!name) {
+            showNoteStatus("Note name cannot be empty.", true);
+            return;
+        }
+        if (allNotes.some(n => n.name.toLowerCase() === name.toLowerCase())) {
+            showNoteStatus("A note with this name already exists.", true);
+            return;
+        }
 
-    addNewNoteBtn.addEventListener('click', async () => {
-        const newNoteName = noteSearchInput.value.trim();
-        if (!newNoteName) return;
+        const newNote = {
+            name: name,
+            content: `# ${name}\n\n`,
+            lastModified: new Date(),
+            createdDate: new Date()
+        };
 
         try {
-            const newNote = {
-                name: newNoteName,
-                content: `# ${newNoteName}\n\n`,
-                lastModified: new Date()
-            };
             await saveNoteToDB(newNote);
-            await loadNoteIntoEditor(newNoteName);
-            await refreshNoteCacheAndRender();
+            allNotes.push(newNote);
+            renderNoteList();
+            loadNoteIntoEditor(newNote);
             noteSearchInput.value = '';
-            addNewNoteBtn.style.display = 'none';
+            noteSearchInput.dispatchEvent(new Event('input')); // Trigger filter clear
         } catch (error) {
-            console.error("Error creating new note:", error);
-            alert(`Could not create note: ${error.message}`);
+            showNoteStatus(`Failed to create note: ${error.message}`, true);
         }
-    });
+    }
 
-    noteList.addEventListener('click', async (e) => {
-        const button = e.target.closest('button.dm-button-small');
-        if (!button) return;
-
-        const noteName = button.dataset.name;
-        if (!noteName) return;
-
-        if (button.classList.contains('note-load-btn')) {
-            await loadNoteIntoEditor(noteName);
-        } else if (button.classList.contains('note-delete-btn')) {
-            if (confirm(`Are you sure you want to delete the note "${noteName}"? This cannot be undone.`)) {
-                try {
-                    await deleteNoteFromDB(noteName);
-                    if (currentLoadedNoteName === noteName) {
-                        clearEditor();
-                    }
-                    await refreshNoteCacheAndRender();
-                } catch (error) {
-                    console.error("Error deleting note:", error);
+    async function handleDeleteNote(name) {
+        if (confirm(`Are you sure you want to delete the note "${name}"? This cannot be undone.`)) {
+            try {
+                await deleteNoteFromDB(name);
+                showNoteStatus(`Note "${name}" deleted.`, false);
+                if (currentNote && currentNote.name === name) {
+                    clearEditor();
                 }
+                await loadAllNotes(); // Reload and re-render
+            } catch (error) {
+                showNoteStatus(`Error deleting note: ${error.message}`, true);
             }
         }
-    });
+    }
 
-
-    // --- Note Editor Logic ---
     function clearEditor() {
-        currentLoadedNoteName = null;
+        currentNote = null;
         currentNoteNameDisplay.textContent = 'No note loaded';
         noteEditorTextarea.value = '';
-        localStorage.removeItem(LS_LAST_OPENED_NOTE);
+        renderPreview();
     }
-    
-    async function loadNoteIntoEditor(noteName) {
-        try {
-            const note = await getNoteFromDB(noteName);
-            if (note) {
-                currentLoadedNoteName = note.name;
-                currentNoteNameDisplay.textContent = note.name;
-                noteEditorTextarea.value = note.content || '';
-                localStorage.setItem(LS_LAST_OPENED_NOTE, note.name);
-                
-                // Ensure preview is off and editor is visible
-                isPreviewMode = true; // Set to true so toggle logic will switch it to false
-                togglePreview(); 
-                
-                switchAccordion(noteEditorContent);
-            } else {
-                alert(`Note "${noteName}" not found.`);
-                clearEditor();
-                localStorage.removeItem(LS_LAST_OPENED_NOTE);
-            }
-        } catch (error) {
-            console.error(`Error loading note "${noteName}":`, error);
+
+    function renderPreview() {
+        if (typeof marked === 'function') {
+            notePreviewArea.innerHTML = marked(noteEditorTextarea.value);
+        } else {
+            notePreviewArea.innerText = "Preview unavailable: Markdown library not loaded.";
         }
     }
 
-    function parseMarkdown(text) {
-        let html = text
-            .replace(/</g, '<').replace(/>/g, '>') // Basic XSS prevention
-            .replace(/^#### (.*$)/gim, '<h4>$1</h4>')
-            .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-            .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-            .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-            .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
-            .replace(/_(.*?)_/g, '<i>$1</i>')
-            .replace(/\n/g, '<br>'); // Convert newlines to <br> for preview
-        return html;
-    }
-
-    function togglePreview() {
-        isPreviewMode = !isPreviewMode;
-        if(isPreviewMode) {
-            const markdownText = noteEditorTextarea.value;
-            notePreviewArea.innerHTML = parseMarkdown(markdownText);
+    function togglePreview(forceState) {
+        const shouldPreview = forceState !== undefined ? forceState : !isPreviewing;
+        if (shouldPreview) {
+            renderPreview();
             noteEditorTextarea.style.display = 'none';
             notePreviewArea.style.display = 'block';
             toggleNotePreviewBtn.textContent = 'Edit';
+            isPreviewing = true;
         } else {
             noteEditorTextarea.style.display = 'block';
             notePreviewArea.style.display = 'none';
             toggleNotePreviewBtn.textContent = 'Preview';
+            isPreviewing = false;
         }
     }
-    toggleNotePreviewBtn.addEventListener('click', togglePreview);
-    
-    saveNoteBtn.addEventListener('click', async () => {
-        if (!currentLoadedNoteName) {
-            alert("No note is currently loaded to save.");
-            return;
-        }
-        try {
-            const noteToSave = {
-                name: currentLoadedNoteName,
-                content: noteEditorTextarea.value,
-                lastModified: new Date()
-            };
-            await saveNoteToDB(noteToSave);
-            alert(`Note "${currentLoadedNoteName}" saved.`);
-        } catch (error) {
-            console.error("Error saving note:", error);
-            alert("Failed to save note. See console for details.");
-        }
-    });
 
-    // --- Modal Initialization & Control ---
-    window.openNotesModal = async () => {
-        if (!notesModal) return;
-        await refreshNoteCacheAndRender();
-
-        const lastNote = localStorage.getItem(LS_LAST_OPENED_NOTE);
-        if (lastNote) {
-            const noteExists = allNotesCache.some(n => n.name === lastNote);
-            if (noteExists) {
-                await loadNoteIntoEditor(lastNote);
+    function openAccordionSection(headerToOpen) {
+        accordionHeaders.forEach(header => {
+            const content = document.querySelector(header.dataset.target);
+            if (header === headerToOpen) {
+                header.classList.add('active');
+                content.style.display = 'block';
             } else {
-                localStorage.removeItem(LS_LAST_OPENED_NOTE);
-                switchAccordion(noteManagerContent);
+                header.classList.remove('active');
+                content.style.display = 'none';
             }
+        });
+    }
+
+    // --- Event Listeners ---
+    if (insertRefBtn) {
+        insertRefBtn.addEventListener('click', async () => {
+            if (typeof window.getCurrentVerseInfo !== 'function') {
+                showNoteStatus("Main app connection error.", true);
+                return;
+            }
+            const verseInfo = await window.getCurrentVerseInfo();
+            if (verseInfo && verseInfo.reference) {
+                insertTextAtCursor(noteEditorTextarea, `[${verseInfo.reference}]`);
+            } else {
+                showNoteStatus("No active verse to insert.", true);
+            }
+        });
+    }
+
+    if (insertRefWithTextBtn) {
+        insertRefWithTextBtn.addEventListener('click', async () => {
+            if (typeof window.getCurrentVerseInfo !== 'function') {
+                showNoteStatus("Main app connection error.", true);
+                return;
+            }
+            const verseInfo = await window.getCurrentVerseInfo();
+            if (verseInfo && verseInfo.reference && verseInfo.text) {
+                const textToInsert = `> **${verseInfo.reference}**\n> ${verseInfo.text}\n\n`;
+                insertTextAtCursor(noteEditorTextarea, textToInsert);
+            } else if (verseInfo && verseInfo.reference) {
+                insertTextAtCursor(noteEditorTextarea, `[${verseInfo.reference}]`);
+                showNoteStatus("Reference inserted (full text not available in this view).", false);
+            } else {
+                showNoteStatus("No active verse to insert.", true);
+            }
+        });
+    }
+
+    accordionHeaders.forEach(header => {
+        header.addEventListener('click', () => openAccordionSection(header));
+    });
+
+    if (modalCloseBtnNotes) {
+        modalCloseBtnNotes.addEventListener('click', () => {
+            if(typeof window.closeModal === 'function') {
+                window.closeModal(notesModal);
+            } else {
+                notesModal.style.display = 'none'; // Fallback
+            }
+        });
+    }
+
+    if (noteSearchInput) {
+        noteSearchInput.addEventListener('input', () => {
+            renderNoteList();
+            const nameExists = allNotes.some(n => n.name.toLowerCase() === noteSearchInput.value.trim().toLowerCase());
+            addNewNoteBtn.style.display = noteSearchInput.value.trim() && !nameExists ? 'inline-block' : 'none';
+        });
+    }
+    
+    if (addNewNoteBtn) addNewNoteBtn.addEventListener('click', handleAddNewNote);
+    if (saveNoteBtn) saveNoteBtn.addEventListener('click', handleSaveNote);
+    if (toggleNotePreviewBtn) toggleNotePreviewBtn.addEventListener('click', () => togglePreview());
+
+    // --- Global Function for Main App ---
+    window.openNotesModal = async () => {
+        await loadAllNotes();
+        // Default to showing the manager, unless a note is already loaded
+        if (currentNote) {
+            openAccordionSection(document.querySelector('.notes-accordion-header[data-target="#noteEditorContent"]'));
         } else {
-            switchAccordion(noteManagerContent);
+            openAccordionSection(document.querySelector('.notes-accordion-header[data-target="#noteManagerContent"]'));
         }
-        notesModal.style.display = 'block';
-        noteSearchInput.focus();
     };
-
-    closeModalBtn.addEventListener('click', () => {
-        notesModal.style.display = 'none';
-    });
-
-    // Close with Escape key (handled by main_app_script.js's global listener)
-    // Close on outside click
-     notesModal.addEventListener('click', (e) => {
-        if (e.target === notesModal) {
-            notesModal.style.display = 'none';
-        }
-    });
 });
