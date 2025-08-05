@@ -178,38 +178,48 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function loadNoteIntoEditor(note) {
-        // Defensive: check if all editor elements exist
-        if (!note || !currentNoteNameDisplay || !noteEditorTextarea) {
-            showNoteStatus('Note editor is not available or invalid note object.', true);
-            return;
-        }
-        currentNote = note;
-        currentNoteNameDisplay.textContent = note.name;
-        noteEditorTextarea.value = note.content || '';
-        if (isPreviewing) {
-            renderPreview();
-        }
-        showNoteStatus(`Loaded note: "${note.name}"`, false);
-
-        // --- Accordion logic fix ---
-        // Find the header and section for the editor, open it, close others.
-        // Fallback: show/hide editor area directly if selector fails.
-        let editorHeader = null;
-        if (accordionHeaders && accordionHeaders.length > 0) {
-            accordionHeaders.forEach(header => {
-                if (header.dataset && header.dataset.target === "#noteEditorContent") editorHeader = header;
-            });
-        }
-        if (editorHeader) {
-            openAccordionSection(editorHeader);
-        } else {
-            // fallback: show editor area by id
-            const editorSection = document.getElementById('noteEditorContent');
-            if (editorSection) editorSection.style.display = 'block';
-            const managerSection = document.getElementById('noteManagerContent');
-            if (managerSection) managerSection.style.display = 'none';
-        }
+    if (!note) {
+        showNoteStatus('Invalid note object.', true);
+        return;
     }
+    if (!currentNoteNameDisplay || !noteEditorTextarea) {
+        showNoteStatus('Note editor area not found in DOM.', true);
+        return;
+    }
+    currentNote = note;
+    currentNoteNameDisplay.textContent = note.name;
+    noteEditorTextarea.value = note.content || '';
+    noteEditorTextarea.style.display = 'block'; // Always show the textarea
+    if (notePreviewArea) notePreviewArea.style.display = 'none'; // Hide preview
+    if (isPreviewing && typeof renderPreview === 'function') renderPreview();
+
+    // Show the editor section, hide the manager
+    const editorSection = document.getElementById('noteEditorContent');
+    const managerSection = document.getElementById('noteManagerContent');
+    if (editorSection) {
+        editorSection.style.display = 'block';
+        // Optionally, scroll into view or focus
+        if (noteEditorTextarea) noteEditorTextarea.focus();
+    }
+    if (managerSection) managerSection.style.display = 'none';
+
+    // Accordion header handling (optional, just for UI highlight)
+    let editorHeader = null;
+    if (window.accordionHeaders && window.accordionHeaders.length > 0) {
+        window.accordionHeaders.forEach(header => {
+            if (header.dataset && header.dataset.target === "#noteEditorContent") editorHeader = header;
+        });
+        window.accordionHeaders.forEach(header => {
+            header.classList.toggle('active', header === editorHeader);
+        });
+    }
+
+    // Debug: Confirm content written
+    console.log('[Note Debug] Editor content set:', noteEditorTextarea.value);
+
+    showNoteStatus(`Loaded note: "${note.name}"`, false);
+}
+
 
     async function handleSaveNote() {
         const content = noteEditorTextarea.value;
