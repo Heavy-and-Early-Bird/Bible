@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daily Bible Verse - Interactive (Scaled)</title>
     <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@300;400;600&family=Roboto+Slab:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles/style.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#DC143C"> 
 </head>
 <body>
     <!-- Navbar -->
@@ -106,85 +108,119 @@
     <div id="settingsModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 id="settingsModalTitle" class="modal-title">Settings</h3>
-                <button id="modalCloseBtnSettings" class="modal-close-btn" title="Close Settings">×</button>
+                <h3 id="settingsModalTitle" class="modal-title">Options</h3>
+                <button id="modalCloseBtnSettings" class="modal-close-btn" title="Close Options">×</button>
             </div>
             <div class="modal-body">
-                <!-- Personalization Section -->
-                <div class="settings-section">
-                    <h4>Personalize</h4>
-                    <div class="settings-modal-item theme-switcher-item">
-                        <label for="themeSelector">Theme:</label>
-                        <select id="themeSelector">
-                            <option value="dark">Dark (Original)</option>
-                            <option value="light">Light (Original)</option>
-                            <option value="dark_sepia">Dark Sepia (Original)</option>
-                            <option value="ocean_blue">Ocean Blue (Original)</option>
-                            <option value="deep_forest">Deep Forest (Original)</option>
-                            <option value="sunset_orange">Sunset Orange (Original)</option>
-                            <option value="midnight_bloom">Midnight Bloom</option>
-                            <option value="charcoal_amber">Charcoal Amber</option>
-                            <option value="obsidian_emerald">Obsidian Emerald</option>
-                            <option value="daybreak_haze">Daybreak Haze</option>
-                            <option value="vanilla_cream">Vanilla Cream</option>
-                            <option value="minty_dew">Minty Dew</option>
-                        </select>
-                    </div>
-                    <div class="settings-modal-item verse-font-selector-item">
-                        <label for="verseFontSelector">Verse Font:</label>
-                        <select id="verseFontSelector">
-                            <option value="'Roboto Slab', serif">Roboto Slab (Default)</option>
-                            <option value="'Merriweather', serif">Merriweather</option>
-                            <option value="'Times New Roman', Times, serif">Times New Roman</option>
-                            <option value="'Georgia', serif">Georgia</option>
-                            <option value="Arial, Helvetica, sans-serif">Arial</option>
-                            <option value="'Verdana', Geneva, sans-serif">Verdana</option>
-                        </select>
-                    </div>
-                    <div class="settings-modal-item font-size-item">
-                        <label for="fontSizeSlider" id="fontSizeValueLabel">Font Size: 100%</label>
-                        <input type="range" id="fontSizeSlider" min="50" max="400" value="100" step="10" title="Adjust Font Size">
-                    </div>
+                <!-- NEW: Tabbed Interface Structure -->
+                <div class="settings-tab-nav">
+                    <button class="settings-tab-button active" data-tab-target="#settingsPersonalizeTab">Personalize</button>
+                    <button class="settings-tab-button" data-tab-target="#settingsToolsTab">Tools</button>
+                    <button class="settings-tab-button" data-tab-target="#settingsInfoTab">Info</button>
                 </div>
-                <hr class="settings-hr">
 
-                <!-- Audiovisual Settings Section (NOW A LINK) -->
-                <div class="settings-section">
-                    <h4>Audiovisual</h4>
-                    <p style="font-size:0.9rem; margin-bottom:15px;">Configure background images, sounds, and music. This must be enabled to work.</p>
-                    <div class="settings-item-inline" style="justify-content: flex-start; gap: 10px;">
-                        <button id="toggleAVSystemBtn" class="dm-button">Enable</button>
-                        <a href="audiovisual_settings.html" class="data-manager-link-button">Open Audiovisual Setup</a>
-                    </div>
-                </div>
-                <hr class="settings-hr">
-
-                <div class="settings-section"> 
-                    <h4>Timer & Progress</h4>
-                    <div class="settings-modal-item interval-slider-container">
-                        <label for="intervalSlider" id="intervalValueLabel">Interval: 4 min</label>
-                        <input type="range" id="intervalSlider" min="1" max="15" value="4" step="1" disabled title="Adjust Timer Interval">
-                    </div>
-                    <div class="settings-modal-item checkbox-item">
-                        <input type="checkbox" id="showProgressBarToggle" checked>
-                        <label for="showProgressBarToggle">Show Timer & Progress</label>
-                    </div>
-                </div>
-                <hr class="settings-hr">
-
-                <!-- Data Management Section -->
-                <div class="settings-section">
-                    <h4>Manage Data & Tools</h4>
-                    <div class="settings-subsection">
-                        <h5>Full Data Manager</h5>
-                        <p style="font-size:0.9rem; margin-bottom:15px;">Import Bibles, create/edit collections, use export tools, or the OpenBible Topic Importer.</p>
-                        <div class="settings-modal-item">
-                             <a href="datamanager.html" id="openDataManagerBtn" class="data-manager-link-button">Open Full Data Manager</a>
-                        </div>
-                         <div id="activeCollectionActionsForSettings" class="settings-modal-item" style="display: none; margin-top: 15px;">
-                            <div class="settings-item-inline">
-                                 <label style="margin-bottom: 0; font-weight:normal;">Current Collection: <strong id="activeCollectionForSettingsDisplay"></strong></label>
+                <div class="settings-tab-content-container">
+                    <!-- Pane 1: Personalize -->
+                    <div id="settingsPersonalizeTab" class="settings-tab-pane active">
+                        <!-- Personalization Section -->
+                        <div class="settings-section">
+                            <h4>Appearance</h4>
+                            <div class="settings-modal-item theme-switcher-item">
+                                <label for="themeSelector">Theme:</label>
+                                <select id="themeSelector">
+                                    <option value="dark">Dark (Original)</option>
+                                    <option value="light">Light (Original)</option>
+                                    <option value="dark_sepia">Dark Sepia (Original)</option>
+                                    <option value="ocean_blue">Ocean Blue (Original)</option>
+                                    <option value="deep_forest">Deep Forest (Original)</option>
+                                    <option value="sunset_orange">Sunset Orange (Original)</option>
+                                    <option value="midnight_bloom">Midnight Bloom</option>
+                                    <option value="charcoal_amber">Charcoal Amber</option>
+                                    <option value="obsidian_emerald">Obsidian Emerald</option>
+                                    <option value="daybreak_haze">Daybreak Haze</option>
+                                    <option value="vanilla_cream">Vanilla Cream</option>
+                                    <option value="minty_dew">Minty Dew</option>
+                                </select>
                             </div>
+                            <div class="settings-modal-item verse-font-selector-item">
+                                <label for="verseFontSelector">Verse Font:</label>
+                                <select id="verseFontSelector">
+                                    <option value="'Roboto Slab', serif">Roboto Slab (Default)</option>
+                                    <option value="'Merriweather', serif">Merriweather</option>
+                                    <option value="'Times New Roman', Times, serif">Times New Roman</option>
+                                    <option value="'Georgia', serif">Georgia</option>
+                                    <option value="Arial, Helvetica, sans-serif">Arial</option>
+                                    <option value="'Verdana', Geneva, sans-serif">Verdana</option>
+                                </select>
+                            </div>
+                            <div class="settings-modal-item font-size-item">
+                                <label for="fontSizeSlider" id="fontSizeValueLabel">Font Size: 100%</label>
+                                <input type="range" id="fontSizeSlider" min="50" max="400" value="100" step="10" title="Adjust Font Size">
+                            </div>
+                        </div>
+
+                        <!-- Audiovisual Settings Section -->
+                        <div class="settings-section">
+                            <h4>Audiovisual</h4>
+                            <p style="font-size:0.9rem; margin-bottom:15px;">Configure background images, sounds, and music. This must be enabled to work.</p>
+                            <div class="settings-item-inline" style="justify-content: flex-start; gap: 10px;">
+                                <button id="toggleAVSystemBtn" class="dm-button">Enable</button>
+                                <a href="audiovisual_settings.html" class="data-manager-link-button">Open Audiovisual Setup</a>
+                            </div>
+                        </div>
+
+                        <!-- Timer & Progress Section -->
+                        <div class="settings-section"> 
+                            <h4>Timer & Progress</h4>
+                            <div class="settings-modal-item interval-slider-container">
+                                <label for="intervalSlider" id="intervalValueLabel">Interval: 4 min</label>
+                                <input type="range" id="intervalSlider" min="1" max="15" value="4" step="1" disabled title="Adjust Timer Interval">
+                            </div>
+                            <div class="settings-modal-item checkbox-item">
+                                <input type="checkbox" id="showProgressBarToggle" checked>
+                                <label for="showProgressBarToggle">Show Timer & Progress</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pane 2: Tools -->
+                    <div id="settingsToolsTab" class="settings-tab-pane">
+                        <!-- Data Management Section -->
+                        <div class="settings-section">
+                            <h4>Manage Data & Tools</h4>
+                            <p style="font-size:0.9rem; margin-bottom:15px;">Import Bibles, create/edit collections, use export tools, or the OpenBible Topic Importer.</p>
+                            <div class="settings-modal-item">
+                                 <a href="datamanager.html" id="openDataManagerBtn" class="data-manager-link-button">
+                                     Open Full Data Manager
+                                     <svg class="external-link-icon" viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"></path></svg>
+                                 </a>
+                            </div>
+                             <div id="activeCollectionActionsForSettings" class="settings-modal-item" style="display: none; margin-top: 15px;">
+                                <div class="settings-item-inline">
+                                     <label style="margin-bottom: 0; font-weight:normal;">Current Collection: <strong id="activeCollectionForSettingsDisplay"></strong></label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pane 3: Info -->
+                    <div id="settingsInfoTab" class="settings-tab-pane">
+                        <div class="settings-section">
+                            <h4>About</h4>
+                            <p><strong>Divine Words (Scaled)</strong> is an offline-first, private, and customizable Bible study and presentation tool.</p>
+                            <p>This application was developed by an advanced AI model to create a powerful, framework-free web experience.</p>
+                            <h4>Help</h4>
+                            <ul>
+                                <li><strong>Import Data:</strong> Use the 'Tools' tab to open the Data Manager. From there you can import Bible XML files and create verse collections.</li>
+                                <li><strong>Start Presenting:</strong> Select a Bible and a Collection from the main menu (⋮). Use the arrow keys or on-screen controls to navigate.</li>
+                                <li><strong>Customize:</strong> Use the 'Personalize' tab to change themes, fonts, and audiovisual settings.</li>
+                            </ul>
+                            <h4>Contribute</h4>
+                            <p>This project is open source. You can view the code, report issues, or contribute on GitHub.</p>
+                            <a href="https://github.com/GGoodman8/divine-words" target="_blank" rel="noopener noreferrer" class="info-link data-manager-link-button" style="margin-top:10px;">
+                                View on GitHub
+                                <svg class="external-link-icon" viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"></path></svg>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -231,11 +267,14 @@
                     </div>
 
                     <!-- Accordion 2: Note Editor -->
-                    <div class="notes-accordion-header" data-target="#noteEditorContent">Note Editor</div>
                     <div id="noteEditorContent" class="notes-accordion-content">
                         <div class="note-editor-header">
                             <span id="currentNoteNameDisplay">No note loaded</span>
                             <div class="note-editor-actions">
+                                <div id="insertVerseContainer" style="display: none; gap: 5px;">
+                                    <button id="insertVerseRefBtn" class="dm-button-small" title="Insert Reference (e.g., John 3:16)">+ Ref</button>
+                                    <button id="insertVerseRefAndTextBtn" class="dm-button-small" title="Insert Reference and Full Text">+ Text</button>
+                                </div>
                                 <button id="toggleNotePreviewBtn" class="dm-button-small">Preview</button>
                                 <button id="saveNoteBtn" class="dm-button">Save</button>
                             </div>
@@ -303,6 +342,19 @@
 
 
     <!-- JavaScript Files -->
+    	<script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                    })
+                    .catch(err => {
+                        console.error('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+    </script>
     <script src="scripts/script.js"></script>
     <script src="scripts/notes_manager.js"></script>
     <script src="scripts/audiovisual_integrations.js"></script>

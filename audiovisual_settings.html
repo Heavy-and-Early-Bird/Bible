@@ -6,6 +6,8 @@
     <title>Audiovisual Setup</title>
     <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@300;400;600&family=Roboto+Slab:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#DC143C"> 
 </head>
 <body id="av-settings-page">
     <!-- Navbar -->
@@ -72,7 +74,7 @@
                     </div>
                     <div class="settings-modal-item">
                         <label for="bgImageSlideshowInterval" id="bgImageSlideshowIntervalLabel">Slideshow Interval (sec): 10</label>
-                        <input type="range" id="bgImageSlideshowInterval" min="5" max="60" value="10" step="1">
+                        <input type="range" id="bgImageSlideshowInterval" min="5" max="900" value="10" step="5">
                     </div>
                     <hr class="settings-hr">
                     <div class="settings-modal-item checkbox-item">
@@ -129,7 +131,19 @@
             </div>
         </div>
     </div>
-
+	<script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                    })
+                    .catch(err => {
+                        console.error('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+    </script>
     <script src="scripts/script.js"></script>
     <script src="scripts/audiovisual_integrations.js"></script>
     <script src="scripts/audiovisual_settings_script.js"></script>

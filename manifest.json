@@ -1,0 +1,26 @@
+
+{
+  "name": "Divine Words (Scaled)",
+  "short_name": "Divine Words",
+  "description": "An offline-first, private, and customizable Bible study and presentation tool.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#1a1a1d",
+  "theme_color": "#DC143C",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "assets/icons/icon-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icons/icon-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ]
+}
