@@ -8,6 +8,9 @@
     <link rel="stylesheet" href="styles/style.css">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#DC143C"> 
+    
+    <!-- ADD TIPPY.JS STYLESHEET -->
+    <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/dist/tippy.css"/>
 </head>
 <body>
     <!-- Navbar -->
@@ -48,8 +51,6 @@
                             </select>
                         </div>
                         <hr class="settings-hr" style="margin: 10px 0;">
-                        <!-- Link to Audio Bible TTS Page -->
-
 
                         <!-- Action Buttons -->
                         <div class="options-panel-actions">
@@ -66,7 +67,7 @@
         <!-- Icon set by JS -->
     </button>
 
-    <!-- Main Content Area (ID is important, and now has a class) -->
+    <!-- Main Content Area -->
     <main id="mainContentArea" class="content-area av-background-target">
         <div id="verse-text" class="verse-text-display" data-no-verses-message="Please import a Bible and/or select a translation in Settings.">
             <!-- Content injected by JS -->
@@ -77,28 +78,18 @@
     <!-- Application Status Bar -->
     <div id="appStatusBar" class="app-status-bar">
         <div class="status-bar-segment status-bar-left" id="goodmanLogoInStatus">Goodman</div>
-
-        <!-- Spacer to push right content -->
         <div class="status-bar-segment status-bar-main-spacer"></div>
-
-        <!-- Right-aligned content -->
         <div class="status-bar-segment status-bar-right-content">
-            <!-- Timer Text -->
             <div class="status-bar-timer-info">
                 <span id="statusBarTimeLabel" class="status-bar-time-label">Next:</span>
                 <span id="statusBarTimeLeft" class="status-bar-time-left">00:00</span>
             </div>
-            <!-- Quick Seek Panel Toggle Button -->
             <div id="quickSeekPanelToggleContainerInStatusBar">
                 <button id="toggleQuickSeekPanelBtnInStatusBar" title="Quick Seek Controls" class="icon-button">
-                    <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm4.95-4.95l-1.41 1.41L16.17 8H14v2h2.17l1.62-1.62 1.41-1.41zM4.83 9.59L3.21 7.97l1.41-1.41L6.25 8.17V6h2v2.17L6.62 9.81l-1.41 1.41L4.83 9.59zm11.58 5.82l1.62 1.62 1.41 1.41-1.41 1.41-1.62-1.62V18h-2v-2.17l-1.62 1.62-1.41 1.41-1.41-1.41 1.62-1.62H14v-2h2.17l.24.23z"></path>
-                    </svg>
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm4.95-4.95l-1.41 1.41L16.17 8H14v2h2.17l1.62-1.62 1.41-1.41zM4.83 9.59L3.21 7.97l1.41-1.41L6.25 8.17V6h2v2.17L6.62 9.81l-1.41 1.41L4.83 9.59zm11.58 5.82l1.62 1.62 1.41 1.41-1.41 1.41-1.62-1.62V18h-2v-2.17l-1.62 1.62-1.41 1.41-1.41-1.41 1.62-1.62H14v-2h2.17l.24.23z"></path></svg>
                 </button>
             </div>
         </div>
-
-        <!-- New Full-Width Background Progress Bar -->
         <div id="statusBarFullWidthProgressBg" class="status-bar-fullwidth-progress-bg">
             <div id="statusBarFullWidthProgressFill" class="status-bar-fullwidth-progress-fill"></div>
         </div>
@@ -112,17 +103,13 @@
                 <button id="modalCloseBtnSettings" class="modal-close-btn" title="Close Options">×</button>
             </div>
             <div class="modal-body">
-                <!-- NEW: Tabbed Interface Structure -->
                 <div class="settings-tab-nav">
                     <button class="settings-tab-button active" data-tab-target="#settingsPersonalizeTab">Personalize</button>
                     <button class="settings-tab-button" data-tab-target="#settingsToolsTab">Tools</button>
                     <button class="settings-tab-button" data-tab-target="#settingsInfoTab">Info</button>
                 </div>
-
                 <div class="settings-tab-content-container">
-                    <!-- Pane 1: Personalize -->
                     <div id="settingsPersonalizeTab" class="settings-tab-pane active">
-                        <!-- Personalization Section -->
                         <div class="settings-section">
                             <h4>Appearance</h4>
                             <div class="settings-modal-item theme-switcher-item">
@@ -158,8 +145,6 @@
                                 <input type="range" id="fontSizeSlider" min="50" max="400" value="100" step="10" title="Adjust Font Size">
                             </div>
                         </div>
-
-                        <!-- Audiovisual Settings Section -->
                         <div class="settings-section">
                             <h4>Audiovisual</h4>
                             <p style="font-size:0.9rem; margin-bottom:15px;">Configure background images, sounds, and music. This must be enabled to work.</p>
@@ -168,8 +153,6 @@
                                 <a href="audiovisual_settings.html" class="data-manager-link-button">Open Audiovisual Setup</a>
                             </div>
                         </div>
-
-                        <!-- Timer & Progress Section -->
                         <div class="settings-section"> 
                             <h4>Timer & Progress</h4>
                             <div class="settings-modal-item interval-slider-container">
@@ -182,10 +165,7 @@
                             </div>
                         </div>
                     </div>
-
-                    <!-- Pane 2: Tools -->
                     <div id="settingsToolsTab" class="settings-tab-pane">
-                        <!-- Data Management Section -->
                         <div class="settings-section">
                             <h4>Manage Data & Tools</h4>
                             <p style="font-size:0.9rem; margin-bottom:15px;">Import Bibles, create/edit collections, use export tools, or the OpenBible Topic Importer.</p>
@@ -202,8 +182,6 @@
                             </div>
                         </div>
                     </div>
-
-                    <!-- Pane 3: Info -->
                     <div id="settingsInfoTab" class="settings-tab-pane">
                         <div class="settings-section">
                             <h4>About</h4>
@@ -246,7 +224,7 @@
         </div>
     </div>
 
-    <!-- Notes Modal (NEW Accordion Structure) -->
+    <!-- Notes Modal -->
     <div id="notesModal" class="modal">
         <div class="modal-content" style="max-width: 800px;">
             <div class="modal-header">
@@ -254,25 +232,16 @@
                 <button id="modalCloseBtnNotes" class="modal-close-btn" title="Close Notes">×</button>
             </div>
             <div class="modal-body">
-                <!-- Accordion Header: Note Manager -->
-                <div class="notes-accordion-header active" data-target="#noteManagerContent">
-                    Note Manager
-                </div>
+                <div class="notes-accordion-header active" data-target="#noteManagerContent">Note Manager</div>
                 <div id="noteManagerContent" class="notes-accordion-section active">
-                  <!-- Note manager UI goes here (search, list, add button, etc.) -->
                   <div class="note-manager-controls">
                       <input type="text" id="noteSearchInput" placeholder="Search or create a new note..."/>
                       <button id="addNewNoteBtn" class="dm-button" style="display:none;">Create Note</button>
                   </div>
                   <ul id="noteList"></ul>
                 </div>
-
-                <!-- Accordion Header: Note Editor -->
-                <div class="notes-accordion-header" data-target="#noteEditorContent">
-                  Note Editor
-                </div>
+                <div class="notes-accordion-header" data-target="#noteEditorContent">Note Editor</div>
                 <div id="noteEditorContent" class="notes-accordion-section">
-                  <!-- Note editor UI goes here -->
                   <div class="note-editor-header">
                     <span id="currentNoteNameDisplay">No note loaded</span>
                     <div class="note-editor-actions">
@@ -295,7 +264,6 @@
     <!-- Quick Seek Panel -->
     <div id="quickSeekPanel" class="quick-seek-panel">
         <div id="quickSeekControlsContainer" class="quick-seek-controls-container">
-            <!-- Go To Reference (Full Bible Mode Only) -->
             <div id="quickSeekGoToContainer">
                 <input type="text" id="quickSeekReferenceInput" placeholder="Go to (e.g., John 3:16)">
                 <button id="quickSeekGoBtn" title="Go to this reference">Go</button>
@@ -303,8 +271,6 @@
                     <svg viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V6h5.17l2 2H20v10z"></path></svg>
                 </button>
             </div>
-
-            <!-- Timer/Collection Navigation Controls -->
             <div class="options-timer-controls">
                 <button id="timerPrevVerseBtn" title="Previous Verse" class="icon-button qsTimerPrevVerseBtn" disabled>
                     <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"></path></svg>
@@ -325,7 +291,7 @@
         </div>
     </div>
 
-    <!-- NEW: Reference Picker Modal -->
+    <!-- Reference Picker Modal -->
     <div id="referencePickerModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -345,6 +311,25 @@
         </div>
     </div>
 
+    <!-- Cross-Reference Side Panel -->
+    <div id="crossRefOverlay" class="side-panel-overlay"></div>
+    <div id="crossRefPanel" class="side-panel">
+        <div class="side-panel-header">
+            <h3 id="crossRefPanelTitle" class="side-panel-title">Cross-References</h3>
+            <button id="panelCloseBtnCrossRef" class="modal-close-btn" title="Close Cross-References">×</button>
+        </div>
+        <div class="side-panel-body">
+            <p style="font-size: 0.85em; margin-bottom: 15px; text-align: center; opacity: 0.8;">Hover over a reference to preview the text.</p>
+            <div id="crossRefListContainer">
+                <!-- Cross-reference links will be populated here by JS -->
+            </div>
+        </div>
+        <div class="side-panel-footer">
+            <div id="crossRefPaginationControls">
+                <!-- Pagination controls will be populated here by JS -->
+            </div>
+        </div>
+    </div>
 
     <!-- JavaScript Files -->
 	<script>
@@ -360,11 +345,13 @@
             });
         }
     </script>
-    <!-- ADDED MARKED.JS LIBRARY FOR PREVIEW -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://unpkg.com/@popperjs/core@2"></script>
+    <script src="https://unpkg.com/tippy.js@6"></script>
     <script src="scripts/script.js"></script>
     <script src="scripts/notes_manager.js"></script>
     <script src="scripts/audiovisual_integrations.js"></script>
+    <script src="scripts/cross_ref_manager.js"></script>
     <script src="scripts/main_app_script.js"></script>
 </body>
 </html>
