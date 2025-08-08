@@ -247,42 +247,50 @@
     </div>
 
     <!-- Notes Modal (NEW Accordion Structure) -->
-<!-- Notes Modal Accordion Structure -->
-<div id="notesModal" class="modal">
-  <div class="modal-content">
-    <!-- Accordion Header: Note Manager -->
-    <div class="notes-accordion-header" data-target="#noteManagerContent">
-      <strong>Note Manager</strong>
-    </div>
-    <div id="noteManagerContent" class="notes-accordion-section" style="display: block;">
-      <!-- Note manager UI goes here (search, list, add button, etc.) -->
-      <input type="text" id="noteSearchInput" placeholder="Search or create note..."/>
-      <button id="addNewNoteBtn" style="display:none;">Add Note</button>
-      <ul id="noteList"></ul>
+    <div id="notesModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Notes</h3>
+                <button id="modalCloseBtnNotes" class="modal-close-btn" title="Close Notes">×</button>
+            </div>
+            <div class="modal-body">
+                <!-- Accordion Header: Note Manager -->
+                <div class="notes-accordion-header active" data-target="#noteManagerContent">
+                    Note Manager
+                </div>
+                <div id="noteManagerContent" class="notes-accordion-section active">
+                  <!-- Note manager UI goes here (search, list, add button, etc.) -->
+                  <div class="note-manager-controls">
+                      <input type="text" id="noteSearchInput" placeholder="Search or create a new note..."/>
+                      <button id="addNewNoteBtn" class="dm-button" style="display:none;">Create Note</button>
+                  </div>
+                  <ul id="noteList"></ul>
+                </div>
+
+                <!-- Accordion Header: Note Editor -->
+                <div class="notes-accordion-header" data-target="#noteEditorContent">
+                  Note Editor
+                </div>
+                <div id="noteEditorContent" class="notes-accordion-section">
+                  <!-- Note editor UI goes here -->
+                  <div class="note-editor-header">
+                    <span id="currentNoteNameDisplay">No note loaded</span>
+                    <div class="note-editor-actions">
+                      <div id="insertVerseContainer" style="display: flex; gap: 5px;">
+                        <button id="insertRefBtn" class="options-panel-button-small" title="Insert Reference">+ Ref</button>
+                        <button id="insertRefWithTextBtn" class="options-panel-button-small" title="Insert Reference and Full Text">+ Text</button>
+                      </div>
+                      <button id="toggleNotePreviewBtn" class="options-panel-button-small">Preview</button>
+                      <button id="saveNoteBtn" class="dm-button">Save</button>
+                    </div>
+                  </div>
+                  <textarea id="noteEditorTextarea" placeholder="Start writing your note here. Basic Markdown is supported."></textarea>
+                  <div id="notePreviewArea" class="note-preview hidden"></div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- Accordion Header: Note Editor -->
-    <div class="notes-accordion-header" data-target="#noteEditorContent">
-      <strong>Note Editor</strong>
-    </div>
-    <div id="noteEditorContent" class="notes-accordion-section" style="display: none;">
-      <!-- Note editor UI goes here -->
-      <div class="note-editor-header">
-        <span id="currentNoteNameDisplay">No note loaded</span>
-        <div class="note-editor-actions">
-          <div id="insertVerseContainer" style="display: none; gap: 5px;">
-            <button id="insertRefBtn" class="dm-button-small" title="Insert Reference">+ Ref</button>
-            <button id="insertRefWithTextBtn" class="dm-button-small" title="Insert Reference and Full Text">+ Text</button>
-          </div>
-          <button id="toggleNotePreviewBtn" class="dm-button-small">Preview</button>
-          <button id="saveNoteBtn" class="dm-button">Save</button>
-        </div>
-      </div>
-      <textarea id="noteEditorTextarea" placeholder="Start writing your note here. Basic Markdown is supported."></textarea>
-      <div id="notePreviewArea" class="note-preview" style="display: none;"></div>
-    </div>
-  </div>
-</div>
 
     <!-- Quick Seek Panel -->
     <div id="quickSeekPanel" class="quick-seek-panel">
@@ -339,7 +347,7 @@
 
 
     <!-- JavaScript Files -->
-    	<script>
+	<script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js')
@@ -352,6 +360,8 @@
             });
         }
     </script>
+    <!-- ADDED MARKED.JS LIBRARY FOR PREVIEW -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="scripts/script.js"></script>
     <script src="scripts/notes_manager.js"></script>
     <script src="scripts/audiovisual_integrations.js"></script>
