@@ -33,55 +33,50 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${bookAbbr}${parsed.chapter}.${parsed.startVerse}`;
     }
 
-    // --- CORRECTED PARSING LOGIC ---
+    // --- NEW & CORRECTED PARSING LOGIC ---
     /**
      * Parses the compact, space-less reference format from the cross-reference JSON.
-     * Handles formats like "Isa65.17", "1cor1.1", and complex ranges like "Col1.16-Col.1.17".
+     * Handles formats like "Isa65.17" and complex ranges like "Col1.16-Col.1.17".
      * @param {string} compactStr The compact reference string.
      * @returns {object|null} A parsed reference object, or null if parsing fails.
      */
     function parseCompactRefString(compactStr) {
+        // For complex ranges like "Col1.16-Col.1.17", we simplify by parsing only the starting reference.
         let processableStr = compactStr.split('-')[0];
 
-        // Regex to find the boundary between the book name (optional digit + letters) and chapter/verse (numbers).
-        // THIS IS THE CORRECTED REGEX
-        const match = processableStr.match(/^([1-3]?[a-zA-Z]+)(\d+.*)$/);
+        // Regex to find the boundary between the book name (letters) and chapter/verse (numbers).
+        const match = processableStr.match(/^([a-zA-Z]+)(\d+.*)$/);
 
         if (match && match[1] && match[2]) {
             const bookPart = match[1];
             const numbersPart = match[2];
 
-            // Reconstruct into a format our main parser can understand.
-            // e.g., "1cor1.1" becomes "1cor 1:1"
+            // Reconstruct the string into a format our main parser can understand.
+            // "Isa65.17" becomes "Isa 65.17"
             const readableRef = `${bookPart} ${numbersPart.replace('.', ':')}`;
             
-            // Use the robust, app-wide parser which understands abbreviations.
+            // Now, use the robust, app-wide parser.
             return parseBibleReferenceWithNote(readableRef);
         }
 
-        console.warn(`Could not parse compact reference: ${compactStr}`);
-        return null; // Return null if the primary regex fails.
+        // As a fallback, try the original parser directly, though it's unlikely to succeed.
+        return parseBibleReferenceWithNote(compactStr);
     }
 
     function getVerseTextForTooltip(refObject) {
         if (!window.fullBibleVerses || window.fullBibleVerses.length === 0) {
             return "Active Bible translation not loaded.";
         }
-        
-        // The robust `parseBibleReferenceWithNote` from script.js already standardizes book names
-        // (e.g., "1cor" becomes "1 Corinthians"). We need to find the lowercase version in our DB.
         const bookKey = refObject.book.toLowerCase().replace(/\s+/g, ' ');
-
         const relevantVerses = window.fullBibleVerses
             .filter(v => 
-                v._book.toLowerCase() === bookKey && 
+                v._book.toLowerCase().startsWith(bookKey) && // Use startsWith for abbreviations (e.g., "Gen" matches "genesis")
                 v._chapter === refObject.chapter && 
                 v._verse >= refObject.startVerse && 
                 v._verse <= refObject.endVerse
             )
             .sort((a, b) => a._verse - b._verse)
             .map(v => v.text.trim());
-
         return relevantVerses.length > 0 ? relevantVerses.join(' ') : "(Text not found in current translation)";
     }
 
@@ -148,6 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 placement: 'top',
                 onShow(instance) {
                     const compactRefString = instance.reference.dataset.tippyRef;
+                    // *** THIS IS THE FIX: Use the new compact parser ***
                     const parsed = parseCompactRefString(compactRefString);
                     
                     instance.setContent(parsed ? getVerseTextForTooltip(parsed) : `Invalid Ref: ${compactRefString}`);

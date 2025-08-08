@@ -2,12 +2,13 @@
 
 // --- Database Constants ---
 const DB_NAME = 'bibleAppDB';
-const DB_VERSION = 5; // IMPORTANT: Incremented DB version to trigger upgrade
+const DB_VERSION = 6; // IMPORTANT: Incremented DB version to trigger upgrade for cross-references
 const OS_TRANSLATIONS = 'translations';
 const OS_VERSES = 'verses';
 const OS_COLLECTIONS = 'collections';
 const OS_ASSETS = 'custom_assets'; // For custom images and sounds
-const OS_NOTES = 'notes'; // NEW: For the notes manager
+const OS_NOTES = 'notes';
+const OS_CROSS_REFS = 'cross_references'; // NEW: For the cross-reference data
 
 let db; // Global DB instance, initialized by initDB()
 
@@ -58,10 +59,16 @@ async function initDB() {
                 }
             }
 
-            // NEW: Add notes object store in version 5
             if (!dbInstance.objectStoreNames.contains(OS_NOTES)) {
                 dbInstance.createObjectStore(OS_NOTES, { keyPath: 'name' });
                 console.log(`Object store ${OS_NOTES} created.`);
+            }
+
+            // NEW in v6: Add the cross_references object store
+            if (!dbInstance.objectStoreNames.contains(OS_CROSS_REFS)) {
+                // The key will be the verse ID string, e.g., "Gen1.1"
+                dbInstance.createObjectStore(OS_CROSS_REFS, { keyPath: 'id' });
+                console.log(`Object store ${OS_CROSS_REFS} created.`);
             }
         };
 
@@ -83,6 +90,20 @@ async function initDB() {
         };
     });
 }
+
+
+// --- CROSS-REFERENCE DB FUNCTION (NEW) ---
+async function getCrossRefById(refId) {
+    if (!db) throw new Error('Database not initialized.');
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction(OS_CROSS_REFS, 'readonly');
+        const store = transaction.objectStore(OS_CROSS_REFS);
+        const request = store.get(refId);
+        request.onsuccess = () => resolve(request.result); // Returns the object {id: "...", refs: [...]} or undefined
+        request.onerror = (event) => reject(event.target.error);
+    });
+}
+
 
 // --- ASSET MANAGEMENT FUNCTIONS ---
 async function addCustomAsset(name, type, data, isUrl = false) {

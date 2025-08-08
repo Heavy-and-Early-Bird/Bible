@@ -58,8 +58,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const statusBarTimeLeft = document.getElementById('statusBarTimeLeft');
     const statusBarFullWidthProgressFill = document.getElementById('statusBarFullWidthProgressFill');
 
-    // NEW Notes Modal Reference
+    // Modal & Panel References
     const notesModal = document.getElementById('notesModal');
+    const crossRefPanel = document.getElementById('crossRefPanel');
 
     // Quick Seek Panel elements
     const quickSeekPanel = document.getElementById('quickSeekPanel');
@@ -91,6 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- State Variables ---
     let fullBibleVerses = [];
+    window.fullBibleVerses = fullBibleVerses; // EXPOSE for other scripts
     let activeVerseList = [];
     let currentVerseIndex = 0;
     let allStoredCollections = {};
@@ -133,6 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const MIN_FONT_MULTIPLIER = 0.5; 
     const MAX_FONT_MULTIPLIER = 4.0; 
 
+    // --- EXPOSED FUNCTIONS for other modules ---
     window.getCurrentVerseData = async () => {
         if (!currentTranslationId || fullBibleVerses.length === 0) return null;
         if (currentViewMode === VIEW_MODE_FULL_COLLECTION || currentVerseIndex < 0 || activeVerseList.length === 0) return null;
@@ -159,7 +162,6 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     };
 
-    // --- Utility Functions ---
     function appShowStatus(message, isError = false, duration = 3000) {
         if (typeof showStatusMessage === 'function') {
             showStatusMessage(message, isError, duration, statusMessageElement);
@@ -170,7 +172,36 @@ document.addEventListener('DOMContentLoaded', () => {
             if (duration > 0) setTimeout(() => { if (statusMessageElement.textContent === message) statusMessageElement.textContent = ''; }, duration);
         }
     }
+    window.appShowStatus = appShowStatus; // Expose for other scripts
 
+    function openModal(modalElement) {
+        if (!modalElement) return;
+        if (wasPausedBeforeModalOpen === null) {
+            wasPausedBeforeModalOpen = isPaused;
+            if (!isPaused) {
+                pauseTimer(true);
+            }
+        }
+        modalElement.style.display = 'block';
+    }
+    window.openModal = openModal;
+
+    function closeModal(modalElement) {
+        if (!modalElement) return;
+        modalElement.style.display = 'none';
+
+        const isAnotherModalOpen = [settingsModal, collectionsModal, notesModal, referencePickerModal].some(m => m && m.style.display === 'block');
+
+        if (!isAnotherModalOpen) {
+            if (wasPausedBeforeModalOpen === false) {
+                resumeTimer();
+            }
+            wasPausedBeforeModalOpen = null;
+        }
+    }
+    window.closeModal = closeModal;
+
+    // --- Utility Functions ---
     function updateAllTimerButtonsArray() {
         if (quickSeekPanel) {
             timerPrevVerseBtn = quickSeekPanel.querySelector('#timerPrevVerseBtn');
@@ -188,7 +219,6 @@ document.addEventListener('DOMContentLoaded', () => {
         allTimerButtonsInOptions = [timerPrevVerseBtn, pausePlayBtn, timerNextVerseBtn, randomVerseBtn].filter(btn => btn != null);
     }
 
-
     function setControlsState(enabled) {
         updateAllTimerButtonsArray(); 
         allTimerButtonsInOptions.forEach(btn => { if (btn) btn.disabled = !enabled;});
@@ -199,7 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                          !isProgressHiddenByUser && 
                                          activeVerseList.length > 0 && 
                                          currentVerseIndex >= 0 &&
-                                         currentViewMode !== VIEW_MODE_FULL_COLLECTION; // Also consider view mode
+                                         currentViewMode !== VIEW_MODE_FULL_COLLECTION;
              appStatusBar.classList.toggle('progress-active', isProgressSystemActive);
              appStatusBar.classList.toggle('progress-inactive', !isProgressSystemActive);
         }
@@ -256,7 +286,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-
     async function loadCollectionsAndSetActive() {
         try {
             const collectionsArray = await getAllCollectionsFromDB();
@@ -302,7 +331,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateCollectionRelatedButtonStates() {
-        if (quickSeekNoteBtn) quickSeekNoteBtn.disabled = false; // Note button is now ALWAYS enabled
+        if (quickSeekNoteBtn) quickSeekNoteBtn.disabled = false;
         if (openReferencePickerBtn) openReferencePickerBtn.disabled = fullBibleVerses.length === 0;
     }
 
@@ -344,6 +373,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!translationIdToActivate) {
             currentTranslationId = null;
             fullBibleVerses = [];
+            window.fullBibleVerses = fullBibleVerses;
             localStorage.removeItem(LAST_ACTIVE_TRANSLATION_LS_KEY);
             await setActiveVerseList();
             return;
@@ -360,20 +390,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (verses && verses.length > 0) {
                     translationVerseCache[translationIdToActivate] = verses;
                 } else {
-                    delete translationVerseCache[translationIdToActivate]; // Clear cache if fetch fails or returns empty
+                    delete translationVerseCache[translationIdToActivate];
                 }
             }
 
             if (verses && verses.length > 0) {
                 currentTranslationId = translationIdToActivate;
                 fullBibleVerses = verses;
+                window.fullBibleVerses = fullBibleVerses;
                 localStorage.setItem(LAST_ACTIVE_TRANSLATION_LS_KEY, currentTranslationId);
                 appShowStatus(`Loaded "${currentTranslationId.replace(/\.xml$/i, '')}" (${fullBibleVerses.length} verses).`, false, 3000);
             } else {
-                 currentTranslationId = translationIdToActivate; // Still set currentId for UI consistency
+                 currentTranslationId = translationIdToActivate;
                  fullBibleVerses = [];
+                 window.fullBibleVerses = fullBibleVerses;
                  localStorage.setItem(LAST_ACTIVE_TRANSLATION_LS_KEY, currentTranslationId);
-                 delete translationVerseCache[currentTranslationId]; // Ensure empty is cached or re-fetched next time
+                 delete translationVerseCache[currentTranslationId];
                  appShowStatus(`No verses found for "${translationIdToActivate.replace(/\.xml$/i, '')}". Select another or re-import.`, true, 5000);
             }
         } catch (error) {
@@ -381,6 +413,7 @@ document.addEventListener('DOMContentLoaded', () => {
             appShowStatus(`Error loading translation: ${error.message || 'Unknown error'}`, true);
             currentTranslationId = null;
             fullBibleVerses = [];
+            window.fullBibleVerses = fullBibleVerses;
             delete translationVerseCache[translationIdToActivate];
             localStorage.removeItem(LAST_ACTIVE_TRANSLATION_LS_KEY);
         } finally {
@@ -414,13 +447,12 @@ document.addEventListener('DOMContentLoaded', () => {
              if (activeVerseList.length > 0 && currentVerseIndex >= 0) {
                 // displayVerse will handle restarting timers if applicable
             } else {
-                setControlsState(false); // Keep controls off if no content for other modes
+                setControlsState(false);
             }
         }
         displayVerse(currentVerseIndex); 
     }
     if(viewModeSelector) viewModeSelector.addEventListener('change', handleViewModeChange);
-
 
     async function setActiveVerseList() {
         stopTimers(); 
@@ -456,7 +488,7 @@ document.addEventListener('DOMContentLoaded', () => {
                  appShowStatus(noVersesMessage, true, 5000);
             }
 
-        } else { // THIS IS THE FIX: When in Full Bible mode, populate from fullBibleVerses
+        } else {
             activeVerseList = (fullBibleVerses || []).map(v => ({
                 _book: v._book,
                 _chapter: v._chapter,
@@ -489,7 +521,6 @@ document.addEventListener('DOMContentLoaded', () => {
         displayVerse(currentVerseIndex); 
         updateVerseCountDisplay(); 
     }
-
 
     function formatEntryVersesFromList(entry, bibleVersesList, translationName = "") {
         if (!entry) {
@@ -627,7 +658,7 @@ document.addEventListener('DOMContentLoaded', () => {
             switch (currentViewMode) {
                 case 'fullChapter':
                     if (!entryToDisplay) { displayHTML = "<p>No entry selected for chapter view.</p>"; break; }
-                     const bookKeyFull = entryToDisplay._book;
+                    const bookKeyFull = entryToDisplay._book;
                     const chapNumFull = entryToDisplay._chapter;
                     const startHighlightVerseNumFull = entryToDisplay._startVerse;
                     const endHighlightVerseNumFull = entryToDisplay._endVerse;
@@ -735,13 +766,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         break;
                     }
 
-                    if (activeVerseList.length === 0) { // activeVerseList for full collection directly represents collection's verses
+                    if (activeVerseList.length === 0) {
                         displayHTML = `<p>The collection "${activeCollectionName}" is empty.</p>`;
                         if (dynamicBrandArea) dynamicBrandArea.textContent = activeCollectionName + " (Empty)";
                     } else {
                         appShowStatus(`Loading full collection "${activeCollectionName}"...`, false, 0);
                         let fullCollectionHTMLParts = [];
-                        for (const entry of activeVerseList) { // Use activeVerseList which IS the collection for this mode
+                        for (const entry of activeVerseList) {
                             const entryHTML = formatEntryVersesFromList(entry, fullBibleVerses, currentTranslationId);
                             fullCollectionHTMLParts.push(
                                 `<div class="full-collection-entry-item">
@@ -805,7 +836,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function pauseTimer(isSystemPause = false) {
-        if (isPaused) return; // Already paused
+        if (isPaused) return;
         isPaused = true;
         updatePausePlayButtonIcon();
         stopTimers();
@@ -813,7 +844,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function resumeTimer() {
-        if (!isPaused) return; // Already running
+        if (!isPaused) return;
         isPaused = false;
         updatePausePlayButtonIcon();
         if (timeLeftInSeconds <= 0) {
@@ -822,32 +853,6 @@ document.addEventListener('DOMContentLoaded', () => {
         countdownIntervalId = setInterval(countdown, 1000);
         autoAdvanceTimeoutId = setTimeout(autoAdvanceVerse, timeLeftInSeconds * 1000);
         updateProgressBar();
-    }
-
-    function openModal(modalElement) {
-        if (!modalElement) return;
-        if (wasPausedBeforeModalOpen === null) { // Check if a modal isn't already open
-            wasPausedBeforeModalOpen = isPaused;
-            if (!isPaused) {
-                pauseTimer(true); // System pause
-            }
-        }
-        modalElement.style.display = 'block';
-    }
-
-    function closeModal(modalElement) {
-        if (!modalElement) return;
-        modalElement.style.display = 'none';
-
-        // Check if any other modal is still open
-        const isAnotherModalOpen = [settingsModal, collectionsModal, notesModal, referencePickerModal].some(m => m && m.style.display === 'block');
-
-        if (!isAnotherModalOpen) {
-            if (wasPausedBeforeModalOpen === false) { // It was running, so resume
-                resumeTimer();
-            }
-            wasPausedBeforeModalOpen = null; // Reset state
-        }
     }
 
     if (quickSeekNoteBtn) { 
@@ -920,7 +925,6 @@ document.addEventListener('DOMContentLoaded', () => {
      if(openSettingsBtn) openSettingsBtn.addEventListener('click', () => { openModal(settingsModal); if(optionsPanel) optionsPanel.classList.remove('visible'); updateCollectionRelatedButtonStates(); });
      if(modalCloseBtnSettings) modalCloseBtnSettings.addEventListener('click', () => { closeModal(settingsModal); });
 
-
       document.addEventListener('click', (e) => {
         if (optionsPanel?.classList.contains('visible') && !optionsContainer?.contains(e.target)) {
             optionsPanel.classList.remove('visible');
@@ -939,7 +943,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (referencePickerModal?.style.display === "block" && !referencePickerModal.querySelector('.modal-content')?.contains(e.target) && e.target !== openReferencePickerBtn && !openReferencePickerBtn?.contains(e.target) ) { 
             closeModal(referencePickerModal);
         }
-        
+        if (crossRefPanel?.classList.contains("active") && !crossRefPanel.contains(e.target) && e.target.id !== 'dynamicBrandArea') {
+            if(typeof window.closeCrossRefPanel === 'function') window.closeCrossRefPanel();
+        }
         if (quickSeekPanel?.classList.contains("visible") && 
             !quickSeekPanel.contains(e.target) && 
             e.target !== toggleQuickSeekPanelBtnInStatusBar && 
@@ -983,7 +989,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const isProgressSystemActive = !isProgressHiddenByUser && 
                                            activeVerseList.length > 0 && 
                                            currentVerseIndex >= 0 &&
-                                           currentViewMode !== VIEW_MODE_FULL_COLLECTION && /* Added mode check */
+                                           currentViewMode !== VIEW_MODE_FULL_COLLECTION &&
                                            !(allTimerButtonsInOptions[0] && allTimerButtonsInOptions[0].disabled);
             appStatusBar.classList.toggle('progress-active', isProgressSystemActive);
             appStatusBar.classList.toggle('progress-inactive', !isProgressSystemActive);
@@ -1039,6 +1045,7 @@ document.addEventListener('DOMContentLoaded', () => {
              if (collectionsModal?.style.display === "block") { closeModal(collectionsModal); return; }
              if (notesModal?.style.display === "block") { closeModal(notesModal); return; }
              if (referencePickerModal?.style.display === "block") { closeModal(referencePickerModal); return; }
+             if (crossRefPanel?.classList.contains("active")) { if(typeof window.closeCrossRefPanel === 'function') window.closeCrossRefPanel(); return; }
              if (optionsPanel?.classList.contains("visible")) { optionsPanel.classList.remove("visible"); return; }
              if (quickSeekPanel?.classList.contains("visible")) { quickSeekPanel.classList.remove("visible"); return; }
         }
@@ -1151,12 +1158,12 @@ document.addEventListener('DOMContentLoaded', () => {
             statusBarFullWidthProgressFill.style.width = '0%';
          }
 
-         if (appStatusBar) { // Only toggle progress if not in full collection view
+         if (appStatusBar) {
             appStatusBar.classList.toggle('progress-active', !isProgressHiddenByUser && currentViewMode !== VIEW_MODE_FULL_COLLECTION);
             appStatusBar.classList.toggle('progress-inactive', isProgressHiddenByUser || currentViewMode === VIEW_MODE_FULL_COLLECTION);
          }
-         updateProgressBar(); // Will reflect active/inactive based on the class toggles above
-         if (currentViewMode !== VIEW_MODE_FULL_COLLECTION) { // Only start timers if not in full collection
+         updateProgressBar();
+         if (currentViewMode !== VIEW_MODE_FULL_COLLECTION) {
              countdownIntervalId = setInterval(countdown, 1000);
              autoAdvanceTimeoutId = setTimeout(autoAdvanceVerse, VERSE_CHANGE_INTERVAL_MS);
          }
@@ -1244,8 +1251,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (foundIndex !== -1) {
             appShowStatus(`Jumping to ${parsedRef.book} ${parsedRef.chapter}:${parsedRef.startVerse}...`, false, 2000);
             displayVerse(foundIndex);
-            quickSeekReferenceInput.value = ''; // Clear input on success
-            if(quickSeekPanel) quickSeekPanel.classList.remove('visible'); // Close panel
+            quickSeekReferenceInput.value = '';
+            if(quickSeekPanel) quickSeekPanel.classList.remove('visible');
         } else {
             appShowStatus(`Reference "${refText}" not found in this translation.`, true);
         }
@@ -1293,7 +1300,6 @@ document.addEventListener('DOMContentLoaded', () => {
             refPickerVerse.value = '1';
         }
     }
-
 
     async function initializeApp() {
         appShowStatus("Initializing...", false, 0);
@@ -1394,7 +1400,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (lastBook && Array.from(refPickerBook.options).some(opt => opt.value === lastBook)) {
                 refPickerBook.value = lastBook;
-                // Manually trigger population of chapter list first
                 const selectedBook = refPickerBook.value.toLowerCase();
                 const chapters = [...new Set(fullBibleVerses.filter(v => v._book === selectedBook).map(v => v._chapter))].sort((a,b) => a-b);
                 refPickerChapter.innerHTML = '<option value="">-- Chapter --</option>';
@@ -1402,7 +1407,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (lastChapter && Array.from(refPickerChapter.options).some(opt => opt.value === lastChapter)) {
                     refPickerChapter.value = lastChapter;
-                    // Manually trigger verse list population
                     const selectedChap = parseInt(refPickerChapter.value, 10);
                     const verses = fullBibleVerses.filter(v => v._book === selectedBook && v._chapter === selectedChap).map(v => v._verse).sort((a,b) => a-b);
                     refPickerVerse.innerHTML = '<option value="">-- Verse --</option>';
@@ -1503,11 +1507,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         settingsTabButtons.forEach(button => {
             button.addEventListener('click', () => {
-                // Deactivate all
                 settingsTabButtons.forEach(btn => btn.classList.remove('active'));
                 settingsTabPanes.forEach(pane => pane.classList.remove('active'));
-
-                // Activate the clicked one
                 button.classList.add('active');
                 const targetPaneId = button.dataset.tabTarget;
                 const targetPane = document.querySelector(targetPaneId);
@@ -1516,6 +1517,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         });
+        
+        // --- Initialize Modular Scripts ---
+        if (typeof window.initCrossRefManager === 'function') {
+            window.initCrossRefManager();
+        } else {
+            console.error("Cross-Reference Manager failed to initialize.");
+        }
 
         if (statusMessageElement?.textContent === "Initializing...") {
             appShowStatus("", false, 1);

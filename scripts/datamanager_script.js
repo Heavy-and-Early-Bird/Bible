@@ -55,6 +55,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const refExtractionModalCloseBtn = document.getElementById('refExtractionModalCloseBtn');
     const refExtractionModalCloseBtnFooter = document.getElementById('refExtractionModalCloseBtnFooter');
 
+    // NEW: Cross-Reference Elements
+    const dmImportCrossRefBtn = document.getElementById('dmImportCrossRefBtn');
+    const dmCrossRefJsonInput = document.getElementById('dmCrossRefJsonInput');
+    const crossRefStatusMessage = document.getElementById('crossRefStatusMessage');
+
 
     // --- State Variables ---
     let localFullBibleVerses = [];
@@ -64,11 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let fullListOfLinesFromEditor = [];
     let currentExportJsonString = '';
 
-    // Share necessary variables/functions with other scripts IF NEEDED by them directly via window
-    window.localShowStatus = localShowStatus; // Used by this script
-    // Ensure other necessary functions like getTranslationsList, getVersesByTranslation etc.,
-    // are globally available from script.js as they are used by the new exporter_script.js too.
-
+    window.localShowStatus = localShowStatus;
 
     // --- Status Message Function ---
     function localShowStatus(message, isError = false, duration = 4000) {
@@ -80,8 +81,18 @@ document.addEventListener('DOMContentLoaded', () => {
             if (duration > 0) setTimeout(() => { if(dmStatusMessage.textContent === message) dmStatusMessage.textContent = ''; }, duration);
         }
     }
+    
+    function setStatus(element, message, isError, duration = 4000) {
+        if (element) {
+            element.textContent = message;
+            element.style.color = isError ? 'var(--brand-color)' : 'var(--text-color)';
+            if (duration > 0) {
+                setTimeout(() => { if (element.textContent === message) element.textContent = ''; }, duration);
+            }
+        }
+    }
 
-    function showExportStatus(message, isError = false, duration = 4000) { // For JSON Export Modal
+    function showExportStatus(message, isError = false, duration = 4000) { 
          if (exportStatusMessage) {
              exportStatusMessage.textContent = message;
              exportStatusMessage.style.color = isError ? 'var(--brand-color)' : 'var(--text-color)';
@@ -106,7 +117,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
-
 
     // --- Helper: Load Bible for Reference ---
     async function loadFirstAvailableTranslationVerses() {
@@ -142,7 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.warn("DataManager: No translations available for context.");
         return false;
     }
-     // Make this callable by extractor_script.js if needed
+     
      window.loadFirstAvailableTranslationVersesForExtractor = async () => {
         if (localFullBibleVerses.length > 0 && localCurrentTranslationId) {
             if (typeof window.updateModalRefBibleNameDisplay === 'function') {
@@ -153,13 +163,12 @@ document.addEventListener('DOMContentLoaded', () => {
         return await loadFirstAvailableTranslationVerses();
     };
 
-
     // --- Translations Management ---
     async function populateTranslationsList() {
         if (!dmTranslationsList) return;
         dmTranslationsList.innerHTML = '';
         try {
-            const translations = await getTranslationsList(); // from script.js
+            const translations = await getTranslationsList();
             if (translations.length === 0) {
                 dmTranslationsList.innerHTML = '<li>No translations imported yet.</li>';
                 localFullBibleVerses = []; window.localFullBibleVerses = [];
@@ -198,11 +207,11 @@ document.addEventListener('DOMContentLoaded', () => {
         localShowStatus("Processing XML...", false, 0);
         const reader = new FileReader();
         reader.onload = async (evt) => {
-            const parseResult = parseXMLData(evt.target.result, file.name); // from script.js
+            const parseResult = parseXMLData(evt.target.result, file.name);
             if (parseResult && parseResult.verses.length > 0) {
                 try {
                     localShowStatus(`Saving "${parseResult.displayName}" (${parseResult.verses.length} verses)...`, false, 0);
-                    await saveTranslationData(parseResult.translationId, parseResult.displayName, parseResult.verses); // from script.js
+                    await saveTranslationData(parseResult.translationId, parseResult.displayName, parseResult.verses);
                     localShowStatus(`"${parseResult.displayName}" imported successfully.`, false);
                     await populateTranslationsList();
                 } catch (dbError) {
@@ -226,7 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (confirm(`DELETE Translation "${translationId}"?\n\nThis cannot be undone.`)) {
                 try {
                     localShowStatus(`Deleting "${translationId}"...`, false, 0);
-                    await deleteTranslationFromDB(translationId); // from script.js
+                    await deleteTranslationFromDB(translationId);
                     localShowStatus(`Translation "${translationId}" deleted.`, false);
                     await populateTranslationsList();
                 } catch (error) {
@@ -236,7 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } else if (e.target.classList.contains('dm-edit-translation-name-btn')) {
             const translationId = e.target.dataset.id;
-            const translationMeta = await getTranslationMetadata(translationId); // from script.js
+            const translationMeta = await getTranslationMetadata(translationId);
             const currentDisplayName = translationMeta ? (translationMeta.name || translationMeta.id) : translationId;
 
             const newName = prompt(`Enter new display name for translation (ID: ${translationId}):`, currentDisplayName);
@@ -257,7 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             try {
                 localShowStatus(`Updating name for "${translationId}"...`, false, 0);
-                await updateTranslationName(translationId, trimmedNewName); // from script.js
+                await updateTranslationName(translationId, trimmedNewName);
                 localShowStatus(`Display name for "${translationId}" updated to "${trimmedNewName}".`, false);
                 await populateTranslationsList();
             } catch (error) {
@@ -272,7 +281,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if(!dmCollectionsList) return;
         dmCollectionsList.innerHTML = '';
         try {
-            const collections = await getAllCollectionsFromDB(); // from script.js
+            const collections = await getAllCollectionsFromDB();
             if (collections.length === 0) {
                 dmCollectionsList.innerHTML = '<li>No collections created or imported yet.</li>';
                 if(dmExportAllCollectionsBtn) dmExportAllCollectionsBtn.disabled = true;
@@ -444,7 +453,7 @@ document.addEventListener('DOMContentLoaded', () => {
              localShowStatus("Cannot save: No parsable verses." + messageSuffix, true); return;
         }
         if (!isUpdate) {
-            const existing = await getCollectionFromDB(name); // from script.js
+            const existing = await getCollectionFromDB(name);
             if (existing && !confirm(`Collection "${name}" exists. Overwrite?`)) {
                 localShowStatus("Save cancelled.", false); return;
             }
@@ -456,7 +465,7 @@ document.addEventListener('DOMContentLoaded', () => {
             lastModified: new Date()
         };
         try {
-            await saveCollectionToDB(collectionToSave); // from script.js
+            await saveCollectionToDB(collectionToSave);
             localShowStatus(`Collection "${name}" ${isUpdate ? "updated" : "saved"} (${versesToSaveObjects.length} entries).${messageSuffix}`, false);
             await populateCollectionsList();
             clearCollectionEditor();
@@ -537,7 +546,7 @@ document.addEventListener('DOMContentLoaded', () => {
              const collName = e.target.dataset.name;
               if (confirm(`DELETE Collection "${collName}"?\nCannot be undone.`)) {
                  try {
-                     await deleteCollectionFromDB(collName); // from script.js
+                     await deleteCollectionFromDB(collName);
                      localShowStatus(`Collection "${collName}" deleted.`, false);
                      await populateCollectionsList();
                      if (currentlyEditingCollectionName === collName) clearCollectionEditor();
@@ -547,7 +556,7 @@ document.addEventListener('DOMContentLoaded', () => {
              const collName = e.target.dataset.name;
              if (!dmCollectionNameInput || !dmCollectionNoteTextarea || !dmUpdateExistingCollectionBtn || !dmSaveNewCollectionBtn ) return;
              try {
-                 const collection = await getCollectionFromDB(collName); // from script.js
+                 const collection = await getCollectionFromDB(collName);
                  if (collection) {
                      clearCollectionEditor();
                      dmCollectionNameInput.value = collection.name;
@@ -569,7 +578,6 @@ document.addEventListener('DOMContentLoaded', () => {
                  } else { localShowStatus(`Collection "${collName}" not found for edit.`, true); await populateCollectionsList(); }
              } catch (error) { localShowStatus(`Load for edit failed: ${error.message || 'Unknown'}`, true); }
          }
-         // Note: The dm-export-text-collection-btn listener has been removed
     });
 
     if(dmImportCollectionsJsonBtn) dmImportCollectionsJsonBtn.addEventListener('click', () => dmCollectionsJsonInput.click());
@@ -681,7 +689,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error("Extractor script not loaded or required functions not found.");
                 return;
             }
-            initExtractorModalDOM({ // Function from extractor_script.js
+            initExtractorModalDOM({ 
                 modalTextExtractionInput: document.getElementById('modalTextExtractionInput'),
                 modalExtractRefsButton: document.getElementById('modalExtractRefsButton'),
                 modalExtractionResultsOutput: document.getElementById('modalExtractionResultsOutput'),
@@ -690,14 +698,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 modalExtractionStatus: document.getElementById('modalExtractionStatus'),
                 dmCollectionVersesEditor: dmCollectionVersesEditor
             });
-            await window.loadFirstAvailableTranslationVersesForExtractor(); // From this script (datamanager)
+            await window.loadFirstAvailableTranslationVersesForExtractor();
             const mInput = document.getElementById('modalTextExtractionInput');
             const mOutput = document.getElementById('modalExtractionResultsOutput');
             const mCopyBtn = document.getElementById('modalCopyValidRefsToEditorBtn');
             if(mInput) mInput.value = '';
             if(mOutput) mOutput.textContent = 'Results will appear here...';
             if(mCopyBtn) mCopyBtn.style.display = 'none';
-            if(typeof window.showModalExtractionStatus === 'function') window.showModalExtractionStatus(''); // from extractor_script.js
+            if(typeof window.showModalExtractionStatus === 'function') window.showModalExtractionStatus(''); 
 
             if (referenceExtractionModal) referenceExtractionModal.style.display = 'block';
             if(mInput) mInput.focus();
@@ -709,13 +717,72 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     if (refExtractionModalCloseBtn) refExtractionModalCloseBtn.addEventListener('click', closeRefExtractionModal);
     if (refExtractionModalCloseBtnFooter) refExtractionModalCloseBtnFooter.addEventListener('click', closeRefExtractionModal);
+    
+    // --- NEW: Cross-Reference Import Logic ---
+    if (dmImportCrossRefBtn) {
+        dmImportCrossRefBtn.addEventListener('click', () => dmCrossRefJsonInput.click());
+    }
+
+    if (dmCrossRefJsonInput) {
+        dmCrossRefJsonInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            setStatus(crossRefStatusMessage, 'Reading and parsing JSON file...', false, 0);
+            const reader = new FileReader();
+            reader.onload = async (evt) => {
+                try {
+                    const crossRefData = JSON.parse(evt.target.result);
+                    setStatus(crossRefStatusMessage, 'JSON parsed. Importing to database (this may take a moment)...', false, 0);
+
+                    const tx = db.transaction(OS_CROSS_REFS, 'readwrite');
+                    const store = tx.objectStore(OS_CROSS_REFS);
+                    let count = 0;
+
+                    // Clear the store before importing to ensure a fresh dataset
+                    await new Promise((resolve, reject) => {
+                        const req = store.clear();
+                        req.onsuccess = resolve;
+                        req.onerror = reject;
+                    });
+                    
+                    setStatus(crossRefStatusMessage, 'Old data cleared. Starting import...', false, 0);
+
+                    for (const key in crossRefData) {
+                        if (Object.hasOwnProperty.call(crossRefData, key)) {
+                            // The key from JSON is the 'id', the value is the array of refs
+                            const record = { id: key, refs: crossRefData[key] };
+                            store.put(record);
+                            count++;
+                        }
+                    }
+
+                    await new Promise((resolve, reject) => {
+                        tx.oncomplete = resolve;
+                        tx.onerror = () => reject(tx.error);
+                    });
+
+                    setStatus(crossRefStatusMessage, `Successfully imported ${count} cross-reference entries.`, false);
+
+                } catch (err) {
+                    console.error("Cross-reference import failed:", err);
+                    setStatus(crossRefStatusMessage, `Import failed: ${err.message}`, true, 0);
+                }
+            };
+            reader.onerror = () => {
+                setStatus(crossRefStatusMessage, 'Failed to read the file.', true, 0);
+            };
+            reader.readAsText(file);
+        });
+    }
+
 
     async function initializeDataManager() {
         localShowStatus("Initializing Data Manager...", false, 0);
         try {
-            await initDB(); // from script.js
+            await initDB();
             const theme = localStorage.getItem('selectedTheme') || 'dark';
-            if (typeof applyTheme === 'function') applyTheme(theme); // from script.js
+            if (typeof applyTheme === 'function') applyTheme(theme);
 
             await populateTranslationsList();
             await populateCollectionsList();
@@ -724,9 +791,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (validationModal) validationModal.style.display = 'none';
             if (exportModal) exportModal.style.display = 'none';
             if (referenceExtractionModal) referenceExtractionModal.style.display = 'none';
-            // The old Collection Text Export Modal logic has been removed.
-
-             // Activate the first tab by default
+            
             if (tabButtons.length > 0 && tabPanes.length > 0) {
                 tabButtons.forEach(btn => btn.classList.remove('active'));
                 tabPanes.forEach(pane => pane.classList.remove('active'));
