@@ -1729,7 +1729,39 @@ hr.settings-hr {
     cursor: pointer;
 }
 
-/* Tippy.js Tooltip Customization (Optional, but looks nice) */
+/* Tippy.js Tooltip Customization (Optional, but looks ni/* (Add this to the end of your existing style.css file) */
+
+/* --- Reference Detail Modal Styles --- */
+#crossRefListContainer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+    max-height: 60vh;
+    overflow-y: auto;
+    justify-content: center;
+}
+
+.cross-ref-link {
+    background-color: var(--options-panel-item-hover-bg);
+    color: var(--brand-color);
+    padding: 5px 12px;
+    border-radius: 15px;
+    text-decoration: none;
+    font-size: 0.9em;
+    font-weight: 500;
+    border: 1px solid var(--options-panel-border);
+    transition: all 0.2s ease;
+}
+
+.cross-ref-link:hover {
+    background-color: var(--brand-color);
+    color: var(--button-text);
+    border-color: var(--brand-color);
+    cursor: pointer;
+}
+
+/* Tippy.js Tooltip Customization */
 .tippy-box[data-theme~='divine-words'] {
     background-color: var(--verse-card-bg);
     color: var(--verse-text-color);
@@ -1737,14 +1769,150 @@ hr.settings-hr {
     border-radius: 6px;
     font-family: var(--verse-font-family);
     box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    max-width: 450px;
 }
 .tippy-box[data-theme~='divine-words'][data-placement^='top'] > .tippy-arrow::before {
-    border-top-color: var(--verse-card-bg);
+    border-top-color: var(--options-panel-border);
 }
 .tippy-box[data-theme~='divine-words'][data-placement^='bottom'] > .tippy-arrow::before {
-    border-bottom-color: var(--verse-card-bg);
+    border-bottom-color: var(--options-panel-border);
 }
 .tippy-content {
     padding: 8px 12px;
     line-height: 1.5;
+    text-align: left;
+}
+
+/* (Add this to the end of your existing style.css file) */
+
+/* --- Side Panel Styles --- */
+.side-panel-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--modal-bg);
+    z-index: 1040; /* Below panel, above content */
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease-in-out;
+}
+.side-panel-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.side-panel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 320px;
+    max-width: 90%;
+    height: 100%;
+    background-color: var(--modal-content-bg);
+    color: var(--modal-content-text);
+    box-shadow: 4px 0 15px rgba(0,0,0,0.2);
+    z-index: 1050;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease-in-out;
+    display: flex;
+    flex-direction: column;
+}
+.side-panel.active {
+    transform: translateX(0);
+}
+
+.side-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--options-panel-border);
+    flex-shrink: 0;
+}
+.side-panel-title {
+    font-size: 1.3rem;
+    color: var(--settings-modal-header-color);
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.side-panel-body {
+    padding: 15px 20px;
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+.side-panel-footer {
+    padding: 10px 20px;
+    border-top: 1px solid var(--options-panel-border);
+    flex-shrink: 0;
+}
+
+#crossRefPaginationControls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+#crossRefPaginationControls button {
+    padding: 5px 12px;
+    font-size: 0.9rem;
+}
+#crossRefPageInfo {
+    font-size: 0.9em;
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+/* --- Cross-Reference Link & Tooltip Styles --- */
+#crossRefListContainer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+    justify-content: flex-start; /* Changed from center */
+}
+
+.cross-ref-link {
+    background-color: var(--options-panel-item-hover-bg);
+    color: var(--brand-color);
+    padding: 5px 12px;
+    border-radius: 15px;
+    text-decoration: none;
+    font-size: 0.9em;
+    font-weight: 500;
+    border: 1px solid var(--options-panel-border);
+    transition: all 0.2s ease;
+}
+
+.cross-ref-link:hover {
+    background-color: var(--brand-color);
+    color: var(--button-text);
+    border-color: var(--brand-color);
+    cursor: pointer;
+}
+
+/* Tippy.js Tooltip Customization */
+.tippy-box[data-theme~='divine-words'] {
+    background-color: var(--verse-card-bg);
+    color: var(--verse-text-color);
+    border: 1px solid var(--options-panel-border);
+    border-radius: 6px;
+    font-family: var(--verse-font-family);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    max-width: 450px;
+}
+.tippy-box[data-theme~='divine-words'][data-placement^='top'] > .tippy-arrow::before {
+    border-top-color: var(--options-panel-border);
+}
+.tippy-box[data-theme~='divine-words'][data-placement^='bottom'] > .tippy-arrow::before {
+    border-bottom-color: var(--options-panel-border);
+}
+.tippy-content {
+    padding: 8px 12px;
+    line-height: 1.5;
+    text-align: left;
 }
