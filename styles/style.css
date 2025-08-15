@@ -338,9 +338,6 @@ body.fullscreen-active #fullscreenToggleBtn {
     transition: background-color 0.3s ease, padding 0.3s ease, background-image 0.5s ease-in-out;
     overflow-y: auto; 
 }
- #mainContentArea {
- background-size: cover; /* Ensure the background image covers the entire area */
- }
 /* Fullscreen state for #mainContentArea */
 body.fullscreen-active #mainContentArea {
     position: fixed; 
@@ -1919,3 +1916,89 @@ hr.settings-hr {
     line-height: 1.5;
     text-align: left;
 }
+/* Style for the tabs */
+#crossRefPanelHeader button { /* Or use specific IDs like #crossRefTab */
+    padding: 10px 15px;
+    cursor: pointer;
+    /* Add other styling */
+}
+
+/* Style for the active tab */
+#crossRefPanelHeader button.active { /* Add 'active' class with JS */
+    /* Add active state styling */
+}
+
+/* Initially hide notes content */
+#notesPanelContent {
+    display: none;
+}
+
+/* Show notes content when notes tab is active */
+/* You'll need a rule that targets #notesPanelContent when the notes tab is active.
+   This might depend on how you implement the tab switching in JavaScript (e.g., adding a class to the parent container).
+   Example:
+   #crossRefPanelBody.notes-active #notesPanelContent {
+       display: block;
+   }
+   #crossRefPanelBody.notes-active #crossRefListContainer {
+       display: none;
+   }
+*/
+/* Styles for the tab container in the side panel header */
+.side-panel-header {
+    display: flex; /* Arrange items horizontally */
+    justify-content: space-between; /* Distribute space between items */
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--options-panel-border);
+    flex-shrink: 0;
+    /* Add or adjust existing styles as needed */
+}
+
+/* Styles for the tab buttons */
+#crossRefPanelHeader button { /* Assuming the tabs are buttons in the header */
+    padding: 8px 15px;
+    cursor: pointer;
+    background-color: transparent; /* Default state */
+    border: none;
+    border-bottom: 2px solid transparent; /* Underline effect */
+    color: var(--text-color);
+    font-size: 1rem;
+    transition: color 0.2s, border-bottom-color 0.2s;
+}
+
+#crossRefPanelHeader button:hover {
+    color: var(--brand-color);
+}
+
+/* Style for the active tab */
+#crossRefPanelHeader button.active { /* Add 'active' class with JavaScript */
+    color: var(--brand-color);
+    border-bottom-color: var(--brand-color);
+    font-weight: bold;
+}
+
+/* Ensure the content areas are within the side panel body */
+.side-panel-body {
+    /* Ensure this allows for scrolling if content overflows */
+    overflow-y: auto;
+    flex-grow: 1;
+    padding: 15px 20px; /* Add padding to the content area */
+}
+
+/* Hide the notes content by default */
+#notesPanelContent {
+    display: none;
+}
+
+/* CSS to show the active content (example using a class on the body or a container) */
+/* You'll need to adjust this based on your JavaScript implementation */
+/* Example: If you add a class 'notes-active' to the body when notes tab is clicked */
+/*
+body.notes-active #notesPanelBody #notesPanelContent {
+    display: block;
+}
+body.notes-active #crossRefListContainer {
+    display: none;
+}
+*/
