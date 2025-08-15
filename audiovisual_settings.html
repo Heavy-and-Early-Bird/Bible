@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audiovisual Setup</title>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@300;400;600&family=Roboto+Slab:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles/style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#DC143C"> 
+</head>
+<body id="av-settings-page">
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="navbar-brand">← Main App</a>
+            <div class="dm-navbar-page-title">Audiovisual Setup</div>
+        </div>
+    </nav>
+
+    <div class="av-settings-container">
+        <h1>Audiovisual Experience</h1>
+        <p id="avStatusMessage"></p>
+
+        <!-- Custom Asset Manager Section -->
+        <div class="settings-section av-assets-manager">
+            <div class="av-asset-column">
+                <h3>Manage Images</h3>
+                <div class="add-asset-form">
+                    <input type="text" id="imageUrlInput" placeholder="Add image by URL...">
+                    <button id="addImageUrlBtn" class="dm-button">Add URL</button>
+                    <button id="addCustomImageFileBtn" class="dm-button">Add File</button>
+                    <input type="file" id="customImageInput" accept="image/jpeg,image/png,image/gif,image/webp" style="display: none;">
+                </div>
+                <ul id="customImagesList" class="asset-list">
+                    <!-- Custom images will be listed here -->
+                </ul>
+            </div>
+            <div class="av-asset-column">
+                <h3>Manage Sounds</h3>
+                <div class="asset-sub-columns">
+                    <div class="asset-sub-column">
+                        <h4>Background Music</h4>
+                        <div class="add-asset-form-small">
+                            <button id="addMusicFileBtn" class="dm-button">Add Music File</button>
+                            <input type="file" id="musicFileInput" accept="audio/*" style="display: none;" multiple>
+                        </div>
+                        <ul id="customMusicList" class="asset-list"></ul>
+                    </div>
+                    <div class="asset-sub-column">
+                        <h4>Verse Change Effects</h4>
+                         <div class="add-asset-form-small">
+                            <button id="addEffectFileBtn" class="dm-button">Add Effect File</button>
+                            <input type="file" id="effectFileInput" accept="audio/*" style="display: none;" multiple>
+                        </div>
+                        <ul id="customEffectsList" class="asset-list"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="av-settings-grid">
+            <!-- Left Column: Controls -->
+            <div class="av-settings-controls">
+                <div class="settings-section">
+                    <h4>Background Image</h4>
+                    <div class="settings-modal-item">
+                        <label for="bgImageSelector">Select Image:</label>
+                        <select id="bgImageSelector"></select>
+                    </div>
+                    <div class="settings-modal-item checkbox-item">
+                        <input type="checkbox" id="bgImageSlideshowToggle">
+                        <label for="bgImageSlideshowToggle">Enable Image Slideshow Mode</label>
+                    </div>
+                    <div class="settings-modal-item">
+                        <label for="bgImageSlideshowInterval" id="bgImageSlideshowIntervalLabel">Slideshow Interval (sec): 10</label>
+                        <input type="range" id="bgImageSlideshowInterval" min="5" max="900" value="10" step="5">
+                    </div>
+                    <hr class="settings-hr">
+                    <div class="settings-modal-item checkbox-item">
+                        <input type="checkbox" id="bgImageOverlayToggle">
+                        <label for="bgImageOverlayToggle">Enable Dark Overlay</label>
+                    </div>
+                    <div class="settings-modal-item">
+                        <label for="bgImageOverlayOpacitySlider" id="bgImageOverlayOpacityLabel">Overlay Opacity: 50%</label>
+                        <input type="range" id="bgImageOverlayOpacitySlider" min="0.1" max="0.9" value="0.5" step="0.05">
+                    </div>
+                     <div class="settings-modal-item">
+                        <label for="bgImageBlurSlider" id="bgImageBlurLabel">Image Blur: 0px</label>
+                        <input type="range" id="bgImageBlurSlider" min="0" max="20" value="0" step="1">
+                    </div>
+                    <div class="settings-modal-item">
+                        <label for="verseCardOpacitySlider" id="verseCardOpacityLabel">Verse Card Opacity: 70%</label>
+                        <input type="range" id="verseCardOpacitySlider" min="0.1" max="1.0" value="0.7" step="0.05">
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h4>Sound Effects & Music</h4>
+                    <div class="settings-modal-item">
+                        <label for="verseSoundSelector">Verse Change Sound:</label>
+                        <select id="verseSoundSelector"></select>
+                    </div>
+                    <div class="settings-modal-item">
+                        <label for="bgMusicSelector">Background Music:</label>
+                        <select id="bgMusicSelector"></select>
+                    </div>
+                    <div class="settings-modal-item">
+                        <label for="bgMusicPlaylistMode">Music Playback Mode:</label>
+                        <select id="bgMusicPlaylistMode">
+                            <option value="repeat">Repeat Current Track</option>
+                            <option value="playlist">Loop All Tracks (Playlist)</option>
+                        </select>
+                    </div>
+                    <div class="settings-modal-item">
+                        <label for="bgMusicVolumeSlider" id="bgMusicVolumeLabel">Music Volume: 50%</label>
+                        <input type="range" id="bgMusicVolumeSlider" min="0" max="1" value="0.5" step="0.01">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Live Preview -->
+            <div class="av-settings-preview">
+                <h2>Live Preview</h2>
+                <div id="avPreviewArea" class="av-background-target">
+                    <div class="preview-text-content">
+                        <h3>John 3:16</h3>
+                        <p>For God so loved the world, that he gave his only Son, that whoever believes in him should not perish but have eternal life.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+	<script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                    })
+                    .catch(err => {
+                        console.error('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+    </script>
+    <script src="scripts/script.js"></script>
+    <script src="scripts/audiovisual_integrations.js"></script>
+    <script src="scripts/audiovisual_settings_script.js"></script>
+</body>
+</html>

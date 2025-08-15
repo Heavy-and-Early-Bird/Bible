@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Divine Words - Help Guide</title>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@300;400;600&family=Roboto+Slab:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles/style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#DC143C">
+    <style>
+        /* Styles specific to the help page for readability */
+        body#help-page {
+            padding-top: 60px;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+        }
+        .help-container {
+            width: 95%;
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 25px;
+            background-color: var(--verse-card-bg);
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .help-container h1, .help-container h2, .help-container h3 {
+            color: var(--brand-color);
+            border-bottom: 1px solid var(--options-panel-border);
+            padding-bottom: 10px;
+            margin-top: 2em;
+            margin-bottom: 1em;
+        }
+        .help-container h1 {
+            text-align: center;
+            font-size: 2.2rem;
+            margin-top: 0;
+        }
+        .help-container h2 {
+            font-size: 1.8rem;
+        }
+        .help-container h3 {
+            font-size: 1.4rem;
+            color: var(--reference-color);
+            border-bottom-style: dashed;
+        }
+        .help-container p, .help-container li {
+            line-height: 1.7;
+            margin-bottom: 1em;
+            font-size: 1.05rem;
+        }
+        .help-container ul, .help-container ol {
+            padding-left: 30px;
+        }
+        .help-container code {
+            background-color: var(--bg-color);
+            padding: 0.2em 0.5em;
+            border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9em;
+            border: 1px solid var(--options-panel-border);
+        }
+        .help-container strong {
+            color: var(--text-color);
+            font-weight: 700;
+        }
+        .help-navbar-page-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--navbar-text);
+        }
+        .toc {
+            background-color: rgba(var(--brand-color-rgb), 0.05);
+            border: 1px dashed var(--options-panel-border);
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 2em;
+        }
+        .toc h2 {
+            margin-top: 0;
+            border: none;
+        }
+        .toc ul {
+            list-style-type: none;
+            padding-left: 10px;
+        }
+        .toc a {
+            text-decoration: none;
+            color: var(--reference-color);
+        }
+        .toc a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body id="help-page">
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="navbar-brand">← Main App</a>
+            <div class="help-navbar-page-title">Comprehensive Help Guide</div>
+        </div>
+    </nav>
+
+    <div class="help-container">
+        <h1>Welcome to Divine Words</h1>
+        <p>This guide provides a comprehensive overview of every feature available in the Divine Words (Scaled) application. Whether you're a new user or looking to master the advanced tools, this document will walk you through everything you need to know.</p>
+
+        <div class="toc">
+            <h2>Table of Contents</h2>
+            <ul>
+                <li><a href="#getting-started">1. Getting Started: The First Steps</a></li>
+                <li><a href="#main-screen">2. The Main Screen: A Detailed Tour</a></li>
+                <li><a href="#data-manager">3. Mastering Your Data: The Data Manager</a></li>
+                <li><a href="#personalization">4. Personalization & Settings</a></li>
+                <li><a href="#advanced-tools">5. Advanced Study Tools</a></li>
+                <li><a href="#troubleshooting">6. Troubleshooting & FAQ</a></li>
+            </ul>
+        </div>
+
+        <h2 id="getting-started">1. Getting Started: The First Steps</h2>
+        <p>To begin using the app, you need data. All your data is stored privately on your device in your browser's storage (IndexedDB), ensuring offline access and complete privacy.</p>
+        
+        <h3>Step 1: Import a Bible Translation</h3>
+        <p>The app is empty by default. You must import at least one Bible translation to see any verses.</p>
+        <ol>
+            <li>Navigate to the main screen and click the <strong>Menu (⋮)</strong> button in the top-right corner.</li>
+            <li>In the panel that appears, click the <strong>Settings</strong> button.</li>
+            <li>In the Settings modal, go to the <strong>Tools</strong> tab.</li>
+            <li>Click the <strong>Open Full Data Manager</strong> button.</li>
+            <li>You will land on the <strong>Bible Translations</strong> tab. Click the <strong>Import New Bible (XML)</strong> button.</li>
+            <li>Select a Bible XML file from your device. The app supports the <strong>Zefania XML format</strong> and a simple numbered book/chapter/verse structure. Many free Bibles are available online in this format.</li>
+            <li>The app will process and save the translation to your device.</li>
+        </ol>
+
+        <h3>Step 2: Create or Import a Verse Collection</h3>
+        <p>A "Collection" is simply a list of Bible references that you want to study or present. While you can browse the full Bible, collections allow you to focus on specific topics or passages.</p>
+        <ol>
+            <li>In the Data Manager, switch to the <strong>Verse Collections</strong> tab.</li>
+            <li>In the "Create / Edit Collection" area, give your new collection a unique name (e.g., "Verses on Faith").</li>
+            <li>In the large text box, type or paste your verse references, one per line (e.g., <code>John 3:16</code>, <code>Hebrews 11:1-6</code>).</li>
+            <li>Click the <strong>Save as New Collection</strong> button.</li>
+        </ol>
+
+        <h3>Step 3: Start Presenting</h3>
+        <ol>
+            <li>Return to the main app by clicking the <strong>← Main App</strong> link in the navbar.</li>
+            <li>Click the <strong>Menu (⋮)</strong> button.</li>
+            <li>Under "Active Translation," select the Bible you imported.</li>
+            <li>Under "Active Collection," click the <strong>Change</strong> button and select the collection you just created.</li>
+            <li>You're all set! The first verse of your collection will appear. Use the arrow keys on your keyboard or the on-screen controls in the Quick Seek Panel to navigate.</li>
+        </ol>
+
+        <h2 id="main-screen">2. The Main Screen: A Detailed Tour</h2>
+        <p>The main screen is your presentation and reading area. It's designed to be clean and focused.</p>
+        
+        <h3>The Navbar</h3>
+        <ul>
+            <li><strong>Reference Display (Top-Left):</strong> Shows the reference for the currently displayed verse. <strong>Clicking this reference will open the Cross-Reference Side Panel</strong>, if you have imported cross-reference data.</li>
+            <li><strong>Options Menu (⋮):</strong> This is your primary control center, giving you access to collections, translations, view modes, and settings.</li>
+        </ul>
+
+        <h3>The Main Content Area</h3>
+        <p>This is where the verse text is displayed. You can use a two-finger pinch gesture on touch devices to dynamically zoom the font size in and out.</p>
+
+        <h3>The Status Bar & Quick Seek Panel</h3>
+        <p>The bar at the bottom of the screen provides at-a-glance information and quick access to controls.</p>
+        <ul>
+            <li><strong>Timer & Progress:</strong> The background of the status bar acts as a progress bar for the auto-advance timer. The text on the right shows the time remaining until the next verse.</li>
+            <li><strong>Quick Seek Button (Dial Icon):</strong> Toggles the Quick Seek Panel.</li>
+        </ul>
+        <p>The <strong>Quick Seek Panel</strong> provides rapid access to key functions without opening the main menu:</p>
+        <ul>
+            <li><strong>Go To Reference:</strong> In "Full Bible" mode, you can type a reference (e.g., `Romans 8:28`) and press "Go" to jump directly to it. The book icon opens a picker for easy selection.</li>
+            <li><strong>Navigation Controls:</strong> Previous, Next, and Random verse buttons.</li>
+            <li><strong>Pause/Play:</strong> Controls the auto-advance timer.</li>
+        </ul>
+
+        <h2 id="data-manager">3. Mastering Your Data: The Data Manager</h2>
+        <p>The Data Manager is the engine room of the app, where you control all your content.</p>
+
+        <h3>Bible Translations Tab</h3>
+        <ul>
+            <li><strong>Import New Bible (XML):</strong> As described in "Getting Started," this is for adding new Bible versions.</li>
+            <li><strong>Existing Translations:</strong> Each imported translation is listed. You can <strong>Edit Name</strong> to give it a more user-friendly display name (this doesn't change the file) or <strong>Delete</strong> it permanently from your device.</li>
+        </ul>
+
+        <h3>Verse Collections Tab</h3>
+        <ul>
+            <li><strong>Import/Export:</strong> You can import collections from a simple <code>.txt</code> file (one reference per line) or import/export all your collections at once using the JSON format for easy backup and sharing.</li>
+            <li><strong>Collection Editor:</strong> This is where you can create new collections from scratch or edit existing ones.
+                <ul>
+                    <li><strong>Validate Lines Now:</strong> This helpful button checks your list of references for formatting errors and highlights any lines that the app can't understand.</li>
+                    <li><strong>Note:</strong> You can add an optional note to your collection, which can be viewed from the main screen.</li>
+                </ul>
+            </li>
+        </ul>
+
+        <h3>Tools Tab</h3>
+        <p>This tab contains powerful utilities for working with your data.</p>
+        <ul>
+            <li><strong>Advanced Exporter:</strong> This tool gives you fine-grained control over how you export your collections as plain text, with options for bullet styles, separators, and more. It's perfect for creating study sheets or pasting into other applications.</li>
+            <li><strong>Cross-Reference Data Importer:</strong> This is where you import the special JSON file containing cross-reference data. Once imported, the cross-reference feature on the main screen will be activated.</li>
+            <li><strong>OpenBible.info Topic Importer:</strong> A powerful tool for building new collections quickly. Enter a topic (e.g., "Grace"), and the app will attempt to fetch a list of relevant verses from the OpenBible.info website and prepare them for you to save as a new collection. (Note: This relies on an external site and a proxy, so its availability may vary.)</li>
+            <li><strong>Bulk Reference Text Compiler:</strong> Paste a list of references or even full chapters (e.g., `Genesis 1`) into this tool, select a translation, and it will compile all the corresponding Bible text into a single block for easy copying.</li>
+        </ul>
+
+        <h2 id="personalization">4. Personalization & Settings</h2>
+        <p>Accessed from the main menu, the Settings modal lets you tailor the app's look and feel.</p>
+
+        <h3>Appearance (Personalize Tab)</h3>
+        <ul>
+            <li><strong>Theme:</strong> Choose from a wide variety of color schemes to suit your preference, from dark and light modes to thematic styles like "Ocean Blue" and "Deep Forest."</li>
+            <li><strong>Verse Font & Font Size:</strong> Customize the typography of the verse display for maximum readability.</li>
+        </ul>
+        
+        <h3>Audiovisual Experience (Personalize Tab)</h3>
+        <p>This is a powerful feature set for creating an immersive presentation environment.</p>
+        <ol>
+            <li>First, you must <strong>Enable</strong> the system.</li>
+            <li>Click <strong>Open Audiovisual Setup</strong> to go to the management page.</li>
+            <li>Here, you can add your own media files:
+                <ul>
+                    <li><strong>Images:</strong> Add background images from your device or via URL.</li>
+                    <li><strong>Sounds:</strong> Add background music tracks and shorter sound effects for verse changes.</li>
+                </ul>
+            </li>
+            <li>Once media is added, you can configure how it's used:
+                <ul>
+                    <li><strong>Background Image:</strong> Select a specific image, or enable Slideshow Mode to cycle through all your custom images randomly.</li>
+                    <li><strong>Effects:</strong> Apply a dark overlay, adjust its opacity, or add a blur effect to the background image to improve text legibility.</li>
+                    <li><strong>Sound:</strong> Select a verse change sound effect, choose background music, and set the music volume.</li>
+                </ul>
+            </li>
+        </ol>
+
+        <h2 id="advanced-tools">5. Advanced Study Tools</h2>
+
+        <h3>The Cross-Reference Panel</h3>
+        <p>After importing cross-reference data in the Data Manager, the main reference display in the top-left of the screen becomes clickable. Clicking it opens a side panel with a list of related verses, sorted by relevance. Hovering your mouse over any of these references will show you a tooltip with the full text of that verse in your currently active translation, allowing for quick and seamless study.</p>
+
+        <h2 id="troubleshooting">6. Troubleshooting & FAQ</h2>
+        <dl>
+            <dt><strong>Why is the screen blank or showing "No verses available"?</strong></dt>
+            <dd>This almost always means that either no Bible translation has been imported, or one has not been selected as active. Follow Step 1 and Step 3 in the "Getting Started" guide.</dd>
+
+            <dt><strong>Why isn't the OpenBible.info importer working?</strong></dt>
+            <dd>This feature depends on an external website (OpenBible.info) and a public CORS proxy to function. If the website changes its structure or the proxy is down, this tool may temporarily fail. It's a convenience tool, not a core feature.</dd>
+
+            <dt><strong>Where is my data stored? Is it private?</strong></dt>
+            <dd>All your data—Bibles, collections, and media files—is stored in your web browser's local IndexedDB storage. It never leaves your device and is not sent to any server. It is completely private. However, this also means you are responsible for backing it up (using the JSON export tools).</dd>
+
+            <dt><strong>How does the offline mode work?</strong></dt>
+            <dd>The app uses a Service Worker to function as a Progressive Web App (PWA). The first time you load the app, it saves all necessary files (HTML, CSS, JavaScript) to your device. All your imported data is already stored locally. This means you can open and use the app with all your data even with no internet connection.</dd>
+        </dl>
+
+    </div>
+    
+    <script>
+        // Simple script to apply the theme to the help page itself
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('selectedTheme') || 'dark';
+            // A simplified theme applier for this standalone page
+            const themes = {
+                dark: {'--bg-color':'#1a1a1d','--text-color':'#c5c6c7','--navbar-bg':'#000000','--navbar-text':'#f0f0f0','--brand-color':'#DC143C','--verse-card-bg':'#2c2f33','--reference-color':'#DC143C','--options-panel-border':'#4f4f52', '--brand-color-rgb': '220, 20, 60'},
+                light: {'--bg-color':'#f4f4f8', '--text-color':'#333333', '--navbar-bg':'#DC143C', '--navbar-text':'#ffffff', '--brand-color':'#EE8A9E', '--verse-card-bg':'#ffffff', '--reference-color':'#B21030', '--options-panel-border':'#cccccc', '--brand-color-rgb': '238, 138, 158'},
+                dark_sepia: { '--bg-color': '#4E342E', '--text-color': '#D7CCC8', '--navbar-bg': '#3E2723', '--navbar-text': '#EFEBE9', '--brand-color': '#A1887F', '--verse-card-bg': '#5D4037', '--reference-color': '#BCAAA4', '--options-panel-border': '#6D4C41', '--brand-color-rgb': '161, 136, 127' },
+                ocean_blue: {'--bg-color': '#e0f7ff', '--text-color': '#2a3f54', '--navbar-bg': '#4a90e2', '--navbar-text': '#ffffff', '--brand-color': '#A5C8F1', '--verse-card-bg': '#ffffff', '--reference-color': '#357ABD', '--options-panel-border': '#9cbadd', '--brand-color-rgb': '165, 200, 241' },
+                deep_forest: { '--bg-color': '#0A140A', '--text-color': '#aaccbb', '--navbar-bg': '#102010', '--navbar-text': '#cce0dd', '--brand-color': '#50c878', '--verse-card-bg': '#0D1A0D', '--reference-color': '#50c878', '--options-panel-border': '#203020', '--brand-color-rgb': '80, 200, 120' },
+                sunset_orange: {'--bg-color': '#fff3e0', '--text-color': '#6d4c41', '--navbar-bg': '#ef6c00', '--navbar-text': '#ffffff', '--brand-color': '#F7B680', '--verse-card-bg': '#ffe0b2', '--reference-color': '#D84315', '--options-panel-border': '#ffb74d', '--brand-color-rgb': '247, 182, 128' },
+                midnight_bloom: {'--bg-color': '#101028','--text-color': '#D0D0E0','--navbar-bg': '#0B0B1C','--navbar-text': '#E0E0F0','--brand-color': '#E91E63','--verse-card-bg': '#1A1A3A', '--reference-color': '#E91E63', '--options-panel-border': '#2A2A50', '--brand-color-rgb': '233, 30, 99'},
+                charcoal_amber: {'--bg-color': '#222831','--text-color': '#EEEEEE','--navbar-bg': '#1A1E25','--navbar-text': '#FAFAFA','--brand-color': '#FFC107','--verse-card-bg': '#393E46', '--reference-color': '#FFC107', '--options-panel-border': '#4A4F58', '--brand-color-rgb': '255, 193, 7'},
+                obsidian_emerald: {'--bg-color': '#0D0D0D','--text-color': '#E0E0E0','--navbar-bg': '#000000','--navbar-text': '#F5F5F5','--brand-color': '#00C853','--verse-card-bg': '#1A1A1A', '--reference-color': '#00C853', '--options-panel-border': '#2C2C2C', '--brand-color-rgb': '0, 200, 83'},
+                daybreak_haze: {'--bg-color': '#F0F4F8', '--text-color': '#37474F', '--navbar-bg': '#9575CD', '--navbar-text': '#FFFFFF', '--brand-color': '#CABAEE', '--verse-card-bg': '#FFFFFF', '--reference-color': '#7E57C2', '--options-panel-border': '#B0BEC5', '--brand-color-rgb': '202, 186, 230'},
+                vanilla_cream: {'--bg-color': '#FAF0E6', '--text-color': '#5D4037', '--navbar-bg': '#FFCA28', '--navbar-text': '#4E342E', '--brand-color': '#FFE594', '--verse-card-bg': '#FFFFFF', '--reference-color': '#FFA000', '--options-panel-border': '#FFCC80', '--brand-color-rgb': '255, 229, 148'},
+                minty_dew: {'--bg-color': '#E0F2F1', '--text-color': '#004D40', '--navbar-bg': '#26A69A', '--navbar-text': '#FFFFFF', '--brand-color': '#93D3CD', '--verse-card-bg': '#FFFFFF', '--reference-color': '#00796B', '--options-panel-border': '#A7DBD4', '--brand-color-rgb': '147, 211, 205'}
+            };
+            const theme = themes[savedTheme] || themes['dark'];
+            if (theme) {
+                for (const key in theme) {
+                    document.documentElement.style.setProperty(key, theme[key]);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

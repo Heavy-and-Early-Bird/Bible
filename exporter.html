@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Collection Exporter</title>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@300;400;600&family=Roboto+Slab:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles/style.css"> <!-- Re-use main styles -->
+    <link rel="stylesheet" href="styles/exporter_style.css"> <!-- Specific styles for exporter -->
+    	<link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#DC143C"> 
+</head>
+<body id="exporter-page">
+    <!-- Exporter Navbar -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="datamanager.html" class="navbar-brand" id="exporterNavbarBrand">← Tools</a> <!-- UPDATED TEXT HERE -->
+            <div class="exporter-navbar-page-title">Advanced Exporter</div>
+            <div class="nav-controls">
+                <!-- Placeholder -->
+            </div>
+        </div>
+    </nav>
+
+    <div class="exporter-container">
+        <h1>Collection Export Tools</h1>
+        <p id="exporterStatusMessage" class="status-message-bar"></p>
+
+        <div class="exporter-section">
+            <h2>Select Data</h2>
+            <div class="exporter-selection-grid">
+                <div class="exporter-selection-column">
+                    <label for="exporterCollectionSelect">Select Collection(s):</label>
+                    <select id="exporterCollectionSelect" multiple size="8">
+                        <!-- Collections populated by JS -->
+                    </select>
+                    <p class="selection-hint">Hold Ctrl/Cmd to select multiple collections.</p>
+                </div>
+                <div class="exporter-selection-column">
+                    <label for="exporterTranslationSelect">Select Translation(s) for Text:</label>
+                    <select id="exporterTranslationSelect" multiple size="8">
+                        <!-- Translations populated by JS -->
+                    </select>
+                    <p class="selection-hint">Select one for simple text, multiple for comparative.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="exporter-options-section">
+            <h2>Export Options</h2>
+            <div class="exporter-option-group">
+                <label for="exporterOutputMode">Output Mode:</label>
+                <select id="exporterOutputMode">
+                    <option value="generatedText">Generated Text</option>
+                    <option value="printLayout" disabled>Print Layout (Coming Soon)</option>
+                </select>
+            </div>
+
+            <!-- Text Generation Options -->
+            <div id="textGenerationOptionsContainer" class="exporter-sub-options">
+                <h3>Text Generation Options</h3>
+                <div class="settings-modal-item" style="display: flex; flex-wrap: wrap; align-items:center; gap:10px;">
+                    <div style="flex-basis: 150px;">
+                        <label for="textExportStartEntry" style="margin-bottom:0; font-size: 0.9em;">Start Entry #:</label>
+                        <input type="number" id="textExportStartEntry" value="1" min="1" class="text-export-number-input">
+                    </div>
+                    <div style="flex-basis: 230px;">
+                        <label for="textExportEndEntry" style="margin-bottom:0; font-size: 0.9em;">End Entry # (0 for all):</label>
+                        <input type="number" id="textExportEndEntry" value="0" min="0" class="text-export-number-input">
+                    </div>
+                </div>
+                 <div class="settings-modal-item">
+                    <label for="textExportBulletStyle">Bullet Style:</label>
+                    <select id="textExportBulletStyle">
+                        <option value="none">None</option>
+                        <option value="square">Square (☐)</option>
+                        <option value="disc">Disc (●)</option>
+                        <option value="dash">Dash (-)</option>
+                        <option value="numbered">Numbered (1., 2.)</option>
+                        <option value="alpha_upper">Alphabetical (A., B.)</option>
+                        <option value="alpha_lower">Alphabetical (a., b.)</option>
+                    </select>
+                </div>
+                <div class="settings-modal-item">
+                    <label for="textExportRefTextSeparator">Reference / Text Separator:</label>
+                    <select id="textExportRefTextSeparator">
+                        <option value=" - ">Space-Hyphen-Space (Ref - Text)</option>
+                        <option value=": ">Colon-Space (Ref: Text)</option>
+                        <option value="\n\t">Newline then Tab (Ref \newline\tab Text)</option>
+                        <option value="\n">Newline (Ref \newline Text)</option>
+                        <option value="; ">Semicolon-Space (Ref; Text)</option>
+                        <option value="\t">Tab (Ref \tab Text)</option>
+                    </select>
+                </div>
+                <div class="settings-modal-item">
+                    <label for="textExportEntrySeparator">Entry Separator (between collection items):</label>
+                    <select id="textExportEntrySeparator">
+                        <option value="\n\n">Double Newline</option>
+                        <option value="\n">Single Newline</option>
+                        <option value="\n---\n">Horizontal Rule (Em Dashes)</option>
+                        <option value=" ">Space (Continuous)</option>
+                    </select>
+                </div>
+                 <div class="settings-modal-item checkbox-item"> 
+                    <input type="checkbox" id="textExportPerCollectionHeader">
+                    <label for="textExportPerCollectionHeader" style="margin-left:5px;">Add Header for Each Collection</label>
+                </div>
+            </div>
+
+            <!-- Print Layout Options (Placeholder) -->
+            <div id="printLayoutOptionsContainer" class="exporter-sub-options" style="display:none;">
+                <h3>Print Layout Options (Coming Soon)</h3>
+                <p>Page size, margins, columns, font choices, etc.</p>
+            </div>
+        </div>
+
+
+        <div class="exporter-actions-section">
+            <button id="exporterGenerateBtn" class="dm-button">Generate Export</button>
+        </div>
+
+        <div class="exporter-output-section">
+            <h2>Generated Output</h2>
+            <textarea id="exporterOutputTextarea" readonly placeholder="Generated output will appear here..."></textarea>
+            <button id="exporterCopyOutputBtn" class="dm-button">Copy Output</button>
+        </div>
+    </div>
+	<script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                    })
+                    .catch(err => {
+                        console.error('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+    </script>
+    <script src="scripts/script.js"></script> <!-- Shared utilities -->
+    <script src="scripts/exporter_script.js"></script> <!-- Exporter specific JS -->
+</body>
+</html>

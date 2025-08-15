@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Divine Words - Data Manager</title>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@300;400;600&family=Roboto+Slab:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles/style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#DC143C"> 
+</head>
+<body id="data-manager-page">
+    <!-- Data Manager Navbar -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="navbar-brand" id="dmNavbarBrand">← Main App</a>
+            <div class="dm-navbar-page-title">Data Manager</div>
+            <div class="nav-controls">
+                <!-- Placeholder for any future DM navbar controls -->
+            </div>
+        </div>
+    </nav>
+
+    <div class="dm-container">
+        <h1 style="text-align: center; margin-top: 20px;">Manage Your App Data</h1>
+        <p id="dmStatusMessage"></p>
+
+        <!-- Tab Navigation -->
+        <div class="dm-tab-nav">
+            <button class="dm-tab-button active" data-tab-target="#dmTranslationsTabContent">Bible Translations</button>
+            <button class="dm-tab-button" data-tab-target="#dmCollectionsTabContent">Verse Collections</button>
+            <button class="dm-tab-button" data-tab-target="#dmToolsTabContent">Tools</button> 
+        </div>
+
+        <!-- Tab Content -->
+        <div class="dm-tab-content-container">
+            <!-- Translations Tab Pane -->
+            <div id="dmTranslationsTabContent" class="dm-tab-pane active">
+                <div class="dm-section" id="dmTranslationsSection">
+                    <h2>Bible Translations</h2>
+                    <p style="font-size:0.9rem; margin-bottom:15px;">Import new Bible translations in XML format (Zefania or numbered book/chapter/verse structure). You can also edit display names or delete existing translations.</p>
+                    <button id="dmImportBibleBtn" class="dm-button">Import New Bible (XML)</button>
+                    <input type="file" id="dmXmlFileInput" accept=".xml,application/xml" style="display: none;">
+                    <ul id="dmTranslationsList" class="dm-item-list">
+                        <!-- Populated by JS -->
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Collections Tab Pane -->
+            <div id="dmCollectionsTabContent" class="dm-tab-pane">
+                 <div class="dm-section" id="dmCollectionsSection">
+                    <h2>Verse Collections</h2>
+                    <p style="font-size:0.9rem; margin-bottom:15px;">Manage your custom verse collections. Import/export, create, edit, or extract references from text to build new collections.</p>
+                    <div class="dm-collection-actions-bar">
+                        <button id="dmImportCollectionTxtBtn" class="dm-button">Import Collection (.txt)</button>
+                        <input type="file" id="dmCollectionFileInput" accept=".txt,text/plain" style="display:none;">
+                        <button id="dmImportCollectionsJsonBtn" class="dm-button">Import Collections (JSON)</button>
+                        <input type="file" id="dmCollectionsJsonInput" accept=".json,application/json" style="display:none;">
+                        <button id="dmExportAllCollectionsBtn" class="dm-button">Export All Collections (JSON)</button>
+                        <button id="openRefExtractionModalBtn" class="dm-button" style="background-color: var(--reference-color);">Extract References from Text</button>
+                    </div>
+
+                    <div id="dmCreateEditCollectionArea" style="margin-top:20px; padding: 15px; border: 1px dashed var(--options-panel-border); border-radius: 5px;">
+                        <h3>Create / Edit Collection</h3>
+                        <label for="dmCollectionNameInput" style="display:block; margin-bottom: 5px;">Collection Name:</label>
+                        <input type="text" id="dmCollectionNameInput" placeholder="Unique Collection Name">
+
+                        <label for="dmCollectionVersesEditor" style="display:block; margin-bottom: 5px;">Collection Verses (one per line, e.g., Genesis 1:1):</label>
+                        <div id="dmCollectionVersesEditor" contenteditable="true" class="dm-collection-editor" aria-placeholder="Enter verse references here..."></div>
+                        <button id="dmValidateVersesBtn" class="dm-button" style="margin-top: -5px; margin-bottom: 10px; background-color: var(--reference-color);">Validate Lines Now</button>
+
+                        <label for="dmCollectionNoteTextarea" style="display:block; margin-bottom: 5px;">Collection Note (Optional):</label>
+                        <textarea id="dmCollectionNoteTextarea" placeholder="Enter notes about this collection..."></textarea>
+
+                        <div class="dm-editor-actions">
+                            <button id="dmSaveNewCollectionBtn" class="dm-button">Save as New Collection</button>
+                            <button id="dmUpdateExistingCollectionBtn" class="dm-button" disabled>Update Selected Collection</button>
+                            <button id="dmClearCollectionEditorBtn" class="dm-button" style="background-color: grey;">Clear Editor</button>
+                        </div>
+                    </div>
+
+                    <h3 style="margin-top:25px;">Existing Collections</h3>
+                    <ul id="dmCollectionsList" class="dm-item-list">
+                        <!-- Populated by JS -->
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Tools Tab Pane -->
+            <div id="dmToolsTabContent" class="dm-tab-pane">
+                <div class="dm-section">
+                    <h2>Advanced Exporter</h2>
+                    <p style="font-size:0.9rem; margin-bottom:15px;">
+                        Use the Advanced Exporter for more control over how your collection data is formatted and exported as text.
+                    </p>
+                    <a href="exporter.html" class="data-manager-link-button" style="display:inline-block; margin-top: 10px;">
+                        Open Advanced Exporter
+                    </a>
+                </div>
+
+                <div class="dm-section">
+                    <h2>Cross-Reference Data</h2>
+                    <p style="font-size:0.9rem; margin-bottom:15px;">
+                        Import a cross-reference dataset in the specified JSON format. This will enable cross-reference lookups within the app. Re-importing will replace all existing cross-reference data.
+                    </p>
+                    <button id="dmImportCrossRefBtn" class="dm-button">Import Cross-Reference (JSON)</button>
+                    <input type="file" id="dmCrossRefJsonInput" accept=".json,application/json" style="display:none;">
+                    <p id="crossRefStatusMessage" class="status-message-inline" style="margin-left: 10px; font-style: italic;"></p>
+                </div>
+
+                <div class="dm-section">
+                    <h2>OpenBible.info Topic Importer</h2>
+                    <p style="font-size:0.9rem; margin-bottom:15px;">
+                        Fetch topical verse lists from <a href="https://www.openbible.info/topics/" target="_blank" rel="noopener noreferrer" style="color: var(--reference-color);">OpenBible.info/topics</a>
+                        and import them to create new collections after review.
+                    </p>
+                    <div class="settings-modal-item" style="margin-bottom: 10px;"> 
+                        <label for="openBibleTopicInput">Enter Topic (e.g., "love", "forgiveness"):</label>
+                        <input type="text" id="openBibleTopicInput" placeholder="Enter topic..." style="max-width: 400px;">
+                    </div>
+                    <button id="fetchOpenBibleTopicBtn" class="dm-button">Fetch & Prepare for Extractor</button>
+                    <p id="openBibleStatusMessage" class="status-message-inline" style="margin-left: 10px; font-style: italic;"></p>
+                    <p style="font-size:0.8em; margin-top:10px; opacity:0.7;">
+                        Note: This tool parses HTML from OpenBible.info. If their site structure changes, it may break.
+                        Uses a proxy for fetching, which can be unreliable.
+                    </p>
+                </div>
+
+                <!-- Bulk Reference Text Compiler -->
+                <div class="dm-section">
+                    <h2>Bulk Reference Text Compiler</h2>
+                    <p style="font-size:0.9rem; margin-bottom:15px;">
+                        Enter multiple Bible references or chapter prompts (one per line). 
+                        The tool will fetch the text for each, attempting to load full chapters for inputs like "Genesis 1".
+                    </p>
+                    <div class="settings-modal-item">
+                        <label for="bulkRefInput">Enter Prompts (one per line):</label>
+                        <textarea id="bulkRefInput" rows="6" placeholder="Genesis 1\nJohn 3:16-18\nPsalms 23\nMatthew 5-7 (Note: chapter ranges like 5-7 rely on extractor capability)" style="min-height: 100px; width:100%;"></textarea>
+                    </div>
+                    <div class="settings-modal-item" style="margin-top: 10px;">
+                        <label for="bulkRefTranslationSelect">Select Translation:</label>
+                        <select id="bulkRefTranslationSelect" style="max-width:400px; width:100%; padding:8px; border: 1px solid var(--options-panel-border); background-color: var(--bg-color); color: var(--text-color); border-radius: 4px; font-size: 0.9rem;">
+                            <option value="">-- Loading Translations --</option>
+                        </select>
+                    </div>
+                    <button id="bulkRefProcessBtn" class="dm-button" style="margin-top: 10px;">Process & Compile Text</button>
+                    <p id="bulkRefStatusMessage" class="status-message-inline" style="margin-left: 10px; font-style: italic;"></p>
+                    
+                    <div id="bulkRefOutputArea" style="margin-top: 20px; display:none;">
+                        <h3>Compiled Text:</h3>
+                        <textarea id="bulkRefOutputTextarea" readonly style="width:100%; min-height: 200px; font-family: var(--verse-font-family); padding:10px; background-color: var(--bg-color); color: var(--text-color); border: 1px solid var(--options-panel-border);"></textarea>
+                        <button id="bulkRefCopyBtn" class="dm-button" style="margin-top:10px;">Copy Compiled Text</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Validation Issues Modal -->
+        <div id="validationModal" class="modal">
+           <div class="modal-content" style="max-width: 700px;">
+                <div class="modal-header">
+                   <h3 id="validationModalTitle" class="modal-title">Validation Issues Found</h3>
+                   <button id="modalCloseBtnValidation" class="modal-close-btn" title="Close Validation Review">×</button>
+               </div>
+               <div id="validationModalBody" class="modal-body">
+                   <p>The following lines have issues. You can correct them below or choose to save only the valid verses.</p>
+                   <div id="validationIssuesContainer" style="max-height: 40vh; overflow-y: auto; margin-bottom: 15px;"></div>
+               </div>
+               <div class="modal-footer" style="justify-content: space-between;">
+                    <button id="validationSaveValidOnlyBtn" class="dm-button">Save Parsable Lines Only</button>
+                    <div>
+                        <button id="validationCancelBtn" class="dm-button" style="background-color: grey; margin-right:10px;">Cancel Review</button>
+                        <button id="validationApplyAndSaveBtn" class="dm-button" style="background-color: var(--brand-color);">Apply Corrections & Save</button>
+                    </div>
+               </div>
+           </div>
+       </div>
+
+       <!-- Export Options Modal (For JSON) -->
+       <div id="exportModal" class="modal">
+           <div class="modal-content" style="max-width: 600px;">
+               <div class="modal-header">
+                   <h3 id="exportModalTitle" class="modal-title">Export Options</h3>
+                   <button id="exportModalCloseBtn" class="modal-close-btn" title="Close Export Options">×</button>
+               </div>
+               <div class="modal-body">
+                   <p>Choose how you want to export the collections data:</p>
+                   <div class="dm-editor-actions" style="justify-content: center; margin-top: 15px; margin-bottom: 15px;">
+                       <button id="exportDownloadBtn" class="dm-button">Download JSON File</button>
+                       <button id="exportCopyBtn" class="dm-button">Copy JSON to Clipboard</button>
+                   </div>
+                   <p style="text-align: center; margin-bottom: 10px;">
+                       <a href="#" id="exportShowJsonBtn" style="font-size: 0.9em; color: var(--reference-color);">Show JSON for Manual Copy</a>
+                   </p>
+                   <textarea id="exportJsonTextarea" readonly placeholder="JSON data will appear here..."></textarea>
+                   <p id="exportStatusMessage" style="margin-top: 15px; min-height: 1.2em; font-weight: bold; text-align: center;"></p>
+               </div>
+               <div class="modal-footer">
+                    <button id="exportModalCloseBtnFooter" class="dm-button" style="background-color: grey;">Close</button>
+               </div>
+           </div>
+       </div>
+
+        <!-- Reference Extraction Modal -->
+        <div id="referenceExtractionModal" class="modal">
+            <div class="modal-content" style="max-width: 750px;">
+                <div class="modal-header">
+                    <h3 id="refExtractionModalTitle" class="modal-title">Extract References from Text</h3>
+                    <button id="refExtractionModalCloseBtn" class="modal-close-btn" title="Close Extractor">×</button>
+                </div>
+                <div class="modal-body">
+                    <p style="font-size: 0.9em; margin-bottom: 10px;">
+                        Reference Bible for context (if available):
+                        <strong id="modalExtractionReferenceBibleName" style="color: var(--reference-color);">None</strong>.
+                    </p>
+                    <label for="modalTextExtractionInput">Paste Text Here:</label>
+                    <textarea id="modalTextExtractionInput" placeholder="Paste text..."></textarea>
+                    <button id="modalExtractRefsButton" class="dm-button">Extract References</button>
+                    <p id="modalExtractionStatus" style="font-size: 0.9em; min-height: 1.2em; margin-top: 5px;"></p>
+                    <div id="modalExtractionResultsArea" style="margin-top: 15px;">
+                        <h4 style="margin-bottom: 8px;">Extraction Results:</h4>
+                        <pre id="modalExtractionResultsOutput">Results will appear here...</pre>
+                        <button id="modalCopyValidRefsToEditorBtn" class="dm-button" style="margin-top: 10px; display: none; background-color: var(--reference-color);">Copy Valid to Editor</button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="refExtractionModalCloseBtnFooter" class="dm-button" style="background-color: grey;">Close</button>
+                </div>
+            </div>
+        </div>
+
+    </div> <!-- End dm-container -->
+	<script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                    })
+                    .catch(err => {
+                        console.error('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+    </script>
+    <script src="scripts/script.js"></script>
+    <script src="scripts/datamanager_script.js"></script>
+    <script src="scripts/extractor_script.js"></script>
+    <script src="scripts/openbible_topics_importer.js"></script>
+    <script src="scripts/bulk_reference_compiler.js"></script>
+</body>
+</html>

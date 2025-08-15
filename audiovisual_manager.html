@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audiovisual Manager</title>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@300;400;600&family=Roboto+Slab:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#DC143C"> 
+</head>
+<body id="av-manager-page">
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="index.html" class="navbar-brand">← Main App</a>
+            <div class="dm-navbar-page-title">Audiovisual Manager</div>
+        </div>
+    </nav>
+
+    <div class="av-manager-container">
+        <h1>Manage Your Media Assets</h1>
+        <p id="avManagerStatus" style="text-align: center; font-weight: bold; min-height: 1.2em;"></p>
+
+        <div class="av-manager-grid">
+            <!-- Image Management Column -->
+            <div class="av-manager-column">
+                <h2>Background Images</h2>
+                <button id="addImagesBtn" class="dm-button">Add Image(s)</button>
+                <input type="file" id="imageFileInput" accept="image/*" multiple style="display: none;">
+                <ul id="av-image-list" class="av-asset-list">
+                    <!-- Image assets will be populated here by JS -->
+                </ul>
+            </div>
+
+            <!-- Sound Management Column -->
+            <div class="av-manager-column">
+                <h2>Sounds & Music</h2>
+                <button id="addSoundsBtn" class="dm-button">Add Sound(s)</button>
+                <input type="file" id="soundFileInput" accept="audio/*" multiple style="display: none;">
+                <ul id="av-sound-list" class="av-asset-list">
+                    <!-- Sound assets will be populated here by JS -->
+                </ul>
+            </div>
+        </div>
+
+        <!-- Preview Section -->
+        <div class="av-preview-section">
+            <h2>Preview</h2>
+            <div id="avPreviewArea">
+                <img id="imagePreview" src="" alt="Image Preview">
+                <audio id="audioPreview" controls></audio>
+                <p id="preview-placeholder">Click on an asset name to preview it here.</p>
+            </div>
+        </div>
+
+    </div>
+	<script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                    })
+                    .catch(err => {
+                        console.error('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+    </script>
+    <script src="scripts/script.js"></script>
+    <script src="scripts/audiovisual_manager_script.js"></script>
+</body>
+</html>
